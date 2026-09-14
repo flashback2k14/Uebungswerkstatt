@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Einmaleins-Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16365f;
+    --paper:#fcfbf7;
+    --karo:#b6d1ec;
+    --rot:#c4342c;
+    --grafit:#5a616b;
+    --panel:#e9e6dd;
+    --linie:#cfcabb;
+    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Fraunces", Georgia, serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:#dedbd1;
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+    max-width:1220px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Bedienfeld ---------- */
+  .panel{
+    position:sticky; top:28px;
+    background:var(--panel);
+    border:1px solid #cfcabb;
+    border-radius:2px;
+    padding:22px 20px 24px;
+  }
+  .panel h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:22px;
+    line-height:1.15;
+    margin:0 0 2px;
+    letter-spacing:-.01em;
+  }
+  .panel .sub{
+    font-size:12.5px; color:var(--grafit);
+    margin:0 0 20px;
+  }
+  fieldset{border:0;padding:0;margin:0 0 16px}
+  legend{
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--grafit); font-weight:700; padding:0 0 7px;
+  }
+  label{display:block;font-size:13.5px;margin:0 0 8px}
+  select,input[type=number],input[type=text]{
+    width:100%; font-family:var(--sans); font-size:14px;
+    padding:7px 9px; border:1px solid #b9b3a3; border-radius:2px;
+    background:#fff; color:var(--ink);
+  }
+  select:focus,input:focus,button:focus-visible{
+    outline:2px solid var(--ink); outline-offset:1px;
+  }
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:0 0 8px}
+  .check input{margin:2px 0 0;accent-color:var(--ink)}
+  .reihen{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+    margin:0 0 8px;
+  }
+  .reihen label{
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    margin:0;padding:5px 0;font-size:13.5px;font-weight:700;
+    background:#fff;border:1px solid #b9b3a3;border-radius:2px;cursor:pointer;
+  }
+  .reihen input{accent-color:var(--ink);margin:0}
+  .reihen label:has(input:checked){background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .buttons{display:flex;gap:8px;margin-top:20px}
+  button{
+    flex:1; font-family:var(--sans); font-size:14px; font-weight:700;
+    padding:10px 8px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--ink); background:#fff; color:var(--ink);
+  }
+  button.primary{background:var(--ink);color:var(--paper)}
+  button:hover{filter:brightness(.94)}
+  .hinweis{
+    margin-top:14px; font-size:12.5px; line-height:1.45;
+    color:var(--rot); display:none;
+  }
+  .hinweis.an{display:block}
+  .fuss{margin-top:18px;font-size:11.5px;line-height:1.5;color:var(--grafit)}
+
+  /* ---------- Blatt ---------- */
+  .blattstapel{display:flex;flex-direction:column;gap:24px}
+  .sheet{
+    background:var(--paper);
+    padding:18mm 16mm 20mm;
+    box-shadow:0 2px 14px rgba(20,30,50,.18);
+    border-radius:1px;
+  }
+  .kopf{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:6px;
+  }
+  .kopf h2{
+    font-family:var(--display);font-weight:700;font-size:26px;
+    margin:0;letter-spacing:-.015em;
+  }
+  .kopf .meta{font-size:11.5px;color:var(--grafit);margin-top:4px}
+  .felder{display:flex;gap:16px;font-size:12px;color:var(--grafit);white-space:nowrap}
+  .felder span{display:inline-block}
+  .feldlinie{display:inline-block;width:34mm;border-bottom:1px solid var(--linie);margin-left:5px}
+  .feldlinie.kurz{width:22mm}
+
+  .block{margin-top:22px}
+  .block-titel{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--grafit);
+    display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  }
+  .block-titel::after{content:"";flex:1;height:1px;background:var(--linie)}
+
+  .gitter{display:grid;gap:9px 18px}
+  .aufgabe{
+    display:flex;align-items:center;gap:9px;
+    padding:5px 2px;border-bottom:1px dotted #ded8c9;
+  }
+  .nr{
+    font-size:11px;color:var(--grafit);min-width:17px;text-align:right;
+    padding-top:2px;
+  }
+  .term{font-size:19px;letter-spacing:.02em;white-space:nowrap}
+  .luecke{
+    display:inline-block;min-width:16mm;border-bottom:1.5px solid var(--ink);
+    vertical-align:baseline;margin:0 2px;
+  }
+  .kasten{
+    display:inline-block;width:20mm;height:9mm;vertical-align:-3mm;
+    border:1px solid var(--karo);
+    background-image:
+      repeating-linear-gradient(to right, var(--karo) 0 .4px, transparent .4px 4.5mm),
+      repeating-linear-gradient(to bottom, var(--karo) 0 .4px, transparent .4px 4.5mm);
+  }
+
+  .loesungen .kopf{border-bottom-color:var(--rot)}
+  .loesungen .gitter{gap:6px 18px}
+  .loesungen .aufgabe{border-bottom:0;padding:2px}
+  .loesungen .term{font-size:16px}
+  .loesungen .erg{color:var(--rot);font-weight:700}
+
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;padding:16px 12px 60px}
+    .panel{position:static}
+    .sheet{padding:14mm 10mm}
+  }
+
+  @media print{
+    @page{size:A4 portrait;margin:14mm}
+    body{background:#fff}
+    .layout{display:block;max-width:none;padding:0}
+    .panel{display:none}
+    .blattstapel{gap:0}
+    .sheet{box-shadow:none;padding:0;background:#fff}
+    .sheet+.sheet{break-before:page}
+    .aufgabe{break-inside:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <form class="panel" id="panel" onsubmit="return false">
+    <h1>Einmaleins-Generator</h1>
+    <p class="sub">Reihen üben, drucken oder als PDF sichern.</p>
+
+    <fieldset>
+      <legend>Inhalt</legend>
+      <label>Überschrift
+        <input type="text" id="titel" value="Einmaleins">
+      </label>
+      <label>Rechenarten
+        <select id="arten">
+          <option value="mult" selected>nur Multiplikation</option>
+          <option value="div">nur Division</option>
+          <option value="beide">Multiplikation und Division</option>
+        </select>
+      </label>
+      <label>Aufgaben je Rechenart
+        <input type="number" id="anzahl" value="20" min="4" max="60" step="1">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Reihen</legend>
+      <div class="reihen" id="reihenwahl"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Darstellung</legend>
+      <div class="check"><input type="checkbox" id="luecken"><label for="luecken" style="margin:0">Platzhalter mischen (7 · __ = 42)</label></div>
+      <div class="check"><input type="checkbox" id="karo" checked><label for="karo" style="margin:0">Karokästchen zum Eintragen</label></div>
+      <div class="check"><input type="checkbox" id="loesung" checked><label for="loesung" style="margin:0">Lösungsblatt anhängen</label></div>
+      <div class="row">
+        <label>Spalten
+          <select id="spalten">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+        <label>Blattnummer
+          <input type="number" id="seed" value="1" min="1" step="1">
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="buttons">
+      <button type="button" id="neu">Neu würfeln</button>
+      <button type="button" class="primary" id="drucken">Drucken / PDF</button>
+    </div>
+
+    <p class="hinweis" id="hinweis"></p>
+    <p class="fuss">Gleiche Blattnummer und gleiche Einstellungen ergeben immer dasselbe Blatt. Im Druckdialog als Ziel „Als PDF speichern“ wählen.</p>
+  </form>
+
+  <div class="blattstapel" id="stapel"></div>
+</div>
+
+<script>
+/* ---------- Zufall mit Startwert, damit Blätter reproduzierbar sind ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const ganz = (rng, min, max) => min + Math.floor(rng() * (max - min + 1));
+const wahl = (rng, liste) => liste[Math.floor(rng() * liste.length)];
+
+/* ---------- Aufgaben bauen ---------- */
+function baueMultiplikation(rng, reihen){
+  const b = wahl(rng, reihen);        /* geübte Reihe */
+  const a = ganz(rng, 1, 10);
+  return { op:'·', a, b, r:a * b };
+}
+
+/* Division als Umkehraufgabe: r : b = a, der Teiler kommt aus der Reihe */
+function baueDivision(rng, reihen){
+  const b = wahl(rng, reihen);
+  const a = ganz(rng, 1, 10);
+  return { op:':', a:a * b, b, r:a };
+}
+
+function serie(rng, bauer, anzahl, reihen, luecken){
+  const raus = [], gesehen = new Set();
+  const maxVerschieden = reihen.length * 10;
+  let fehlversuche = 0;
+  while (raus.length < Math.min(anzahl, maxVerschieden) && fehlversuche < 1200){
+    const auf = bauer(rng, reihen);
+    const key = auf.a + auf.op + auf.b;
+    if (gesehen.has(key)){ fehlversuche++; continue; }
+    gesehen.add(key);
+    auf.form = 'ergebnis';
+    raus.push(auf);
+  }
+  if (luecken) verteilePlatzhalter(rng, raus);
+  return raus;
+}
+
+/* Genau die Hälfte der Aufgaben bekommt einen Platzhalter, zufällig verteilt. */
+function verteilePlatzhalter(rng, liste){
+  const plaetze = liste.map((_, i) => i);
+  for (let i = plaetze.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [plaetze[i], plaetze[j]] = [plaetze[j], plaetze[i]];
+  }
+  const anzahl = Math.round(liste.length / 2);
+  for (let i = 0; i < anzahl; i++){
+    liste[plaetze[i]].form = rng() < 0.5 ? 'mitte' : 'links';
+  }
+}
+
+/* ---------- Darstellung ---------- */
+function termHtml(auf, karo){
+  const feld = karo ? '<span class="kasten"></span>' : '<span class="luecke"></span>';
+  const lue  = '<span class="luecke"></span>';
+  if (auf.form === 'mitte') return `${auf.a} ${auf.op} ${lue} = ${auf.r}`;
+  if (auf.form === 'links') return `${lue} ${auf.op} ${auf.b} = ${auf.r}`;
+  return `${auf.a} ${auf.op} ${auf.b} = ${feld}`;
+}
+
+function loesungHtml(auf){
+  return `${auf.a} ${auf.op} ${auf.b} = <span class="erg">${auf.r}</span>`;
+}
+
+function blockHtml(titel, liste, opt, startNr){
+  if (!liste.length) return '';
+  const zeilen = liste.map((auf, i) =>
+    `<div class="aufgabe">
+      <span class="nr">${startNr + i}.</span>
+      <span class="term">${termHtml(auf, opt.karo)}</span>
+    </div>`
+  ).join('');
+  return `<section class="block">
+    <h3 class="block-titel">${titel}</h3>
+    <div class="gitter" style="grid-template-columns:repeat(${opt.spalten},minmax(0,1fr))">${zeilen}</div>
+  </section>`;
+}
+
+function loesungsBlockHtml(titel, liste, startNr){
+  if (!liste.length) return '';
+  const zeilen = liste.map((auf, i) =>
+    `<div class="aufgabe"><span class="nr">${startNr + i}.</span><span class="term">${loesungHtml(auf)}</span></div>`
+  ).join('');
+  return `<section class="block">
+    <h3 class="block-titel">${titel}</h3>
+    <div class="gitter" style="grid-template-columns:repeat(3,minmax(0,1fr))">${zeilen}</div>
+  </section>`;
+}
+
+function untertitel(opt){
+  const reihen = opt.reihen.join('er-, ') + 'er-Reihe';
+  return `${opt.reihen.length === 10 ? 'alle Reihen' : reihen}`;
+}
+
+/* ---------- Zusammenbauen ---------- */
+const $ = id => document.getElementById(id);
+
+function baueReihenwahl(){
+  $('reihenwahl').innerHTML = Array.from({length:10}, (_, i) => {
+    const n = i + 1;
+    return `<label><input type="checkbox" class="reihe" value="${n}" checked>${n}</label>`;
+  }).join('');
+}
+
+function einstellungen(){
+  const reihen = [...document.querySelectorAll('.reihe:checked')].map(x => parseInt(x.value, 10));
+  return {
+    titel: $('titel').value.trim() || 'Einmaleins',
+    arten: $('arten').value,
+    anzahl: Math.max(4, Math.min(60, parseInt($('anzahl').value, 10) || 20)),
+    reihen,
+    luecken: $('luecken').checked,
+    karo: $('karo').checked,
+    loesung: $('loesung').checked,
+    spalten: parseInt($('spalten').value, 10),
+    seed: Math.max(1, parseInt($('seed').value, 10) || 1)
+  };
+}
+
+function zeichne(){
+  const opt = einstellungen();
+  const hinweis = $('hinweis');
+
+  if (!opt.reihen.length){
+    hinweis.classList.add('an');
+    hinweis.textContent = 'Mindestens eine Reihe auswählen.';
+    $('stapel').innerHTML = '';
+    return;
+  }
+
+  const reihenHash = opt.reihen.reduce((s, r) => s * 31 + r, 7);
+  const rng = mulberry32(opt.seed * 2654435761 + opt.anzahl * 97 + reihenHash * 13);
+
+  const mult = opt.arten === 'div'  ? [] : serie(rng, baueMultiplikation, opt.anzahl, opt.reihen, opt.luecken);
+  const div  = opt.arten === 'mult' ? [] : serie(rng, baueDivision, opt.anzahl, opt.reihen, opt.luecken);
+
+  const fehlend = (opt.arten !== 'div' && mult.length < opt.anzahl) || (opt.arten !== 'mult' && div.length < opt.anzahl);
+  hinweis.classList.toggle('an', fehlend);
+  if (fehlend){
+    hinweis.textContent = 'Mit diesen Reihen gibt es zu wenige verschiedene Aufgaben. Mehr Reihen auswählen oder Anzahl verringern.';
+  }
+
+  const kopf = `<header class="kopf">
+      <div>
+        <h2>${opt.titel}</h2>
+        <div class="meta">${untertitel(opt)} · Blatt ${opt.seed}</div>
+      </div>
+      <div class="felder">
+        <span>Name<span class="feldlinie"></span></span>
+        <span>Datum<span class="feldlinie kurz"></span></span>
+      </div>
+    </header>`;
+
+  let html = `<article class="sheet">
+      ${kopf}
+      ${blockHtml('Multiplikation', mult, opt, 1)}
+      ${blockHtml('Division', div, opt, 1)}
+    </article>`;
+
+  if (opt.loesung && (mult.length || div.length)){
+    html += `<article class="sheet loesungen">
+        <header class="kopf">
+          <div>
+            <h2>Lösungen</h2>
+            <div class="meta">zu „${opt.titel}“ · Blatt ${opt.seed}</div>
+          </div>
+        </header>
+        ${loesungsBlockHtml('Multiplikation', mult, 1)}
+        ${loesungsBlockHtml('Division', div, 1)}
+      </article>`;
+  }
+
+  $('stapel').innerHTML = html;
+}
+
+$('panel').addEventListener('input', zeichne);
+$('panel').addEventListener('change', zeichne);
+$('neu').addEventListener('click', () => {
+  $('seed').value = Math.floor(Math.random() * 9000) + 1000;
+  zeichne();
+});
+$('drucken').addEventListener('click', () => window.print());
+
+baueReihenwahl();
+zeichne();
+</script>
+</body>
+</html>

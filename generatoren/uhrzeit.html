@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uhrzeit-Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16365f;
+    --paper:#fcfbf7;
+    --karo:#b6d1ec;
+    --rot:#c4342c;
+    --grafit:#5a616b;
+    --panel:#e9e6dd;
+    --linie:#cfcabb;
+    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Fraunces", Georgia, serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:#dedbd1;
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+    max-width:1220px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Bedienfeld ---------- */
+  .panel{
+    position:sticky; top:28px;
+    background:var(--panel);
+    border:1px solid #cfcabb;
+    border-radius:2px;
+    padding:22px 20px 24px;
+  }
+  .panel h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:22px;
+    line-height:1.15;
+    margin:0 0 2px;
+    letter-spacing:-.01em;
+  }
+  .panel .sub{
+    font-size:12.5px; color:var(--grafit);
+    margin:0 0 20px;
+  }
+  fieldset{border:0;padding:0;margin:0 0 16px}
+  legend{
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--grafit); font-weight:700; padding:0 0 7px;
+  }
+  label{display:block;font-size:13.5px;margin:0 0 8px}
+  select,input[type=number],input[type=text]{
+    width:100%; font-family:var(--sans); font-size:14px;
+    padding:7px 9px; border:1px solid #b9b3a3; border-radius:2px;
+    background:#fff; color:var(--ink);
+  }
+  select:focus,input:focus,button:focus-visible{
+    outline:2px solid var(--ink); outline-offset:1px;
+  }
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:0 0 8px}
+  .check input{margin:2px 0 0;accent-color:var(--ink)}
+  .buttons{display:flex;gap:8px;margin-top:20px}
+  button{
+    flex:1; font-family:var(--sans); font-size:14px; font-weight:700;
+    padding:10px 8px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--ink); background:#fff; color:var(--ink);
+  }
+  button.primary{background:var(--ink);color:var(--paper)}
+  button:hover{filter:brightness(.94)}
+  .hinweis{
+    margin-top:14px; font-size:12.5px; line-height:1.45;
+    color:var(--rot); display:none;
+  }
+  .hinweis.an{display:block}
+  .fuss{margin-top:18px;font-size:11.5px;line-height:1.5;color:var(--grafit)}
+
+  /* ---------- Blatt ---------- */
+  .blattstapel{display:flex;flex-direction:column;gap:24px}
+  .sheet{
+    background:var(--paper);
+    padding:18mm 16mm 20mm;
+    box-shadow:0 2px 14px rgba(20,30,50,.18);
+    border-radius:1px;
+  }
+  .kopf{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:6px;
+  }
+  .kopf h2{
+    font-family:var(--display);font-weight:700;font-size:26px;
+    margin:0;letter-spacing:-.015em;
+  }
+  .kopf .meta{font-size:11.5px;color:var(--grafit);margin-top:4px}
+  .felder{display:flex;gap:16px;font-size:12px;color:var(--grafit);white-space:nowrap}
+  .felder span{display:inline-block}
+  .feldlinie{display:inline-block;width:34mm;border-bottom:1px solid var(--linie);margin-left:5px}
+  .feldlinie.kurz{width:22mm}
+
+  .block{margin-top:22px}
+  .block-titel{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--grafit);
+    display:flex;align-items:center;gap:10px;margin-bottom:14px;
+  }
+  .block-titel::after{content:"";flex:1;height:1px;background:var(--linie)}
+
+  .uhrgitter{display:grid;gap:10mm 8mm}
+  .uhr{
+    display:flex;flex-direction:column;align-items:center;gap:3mm;
+  }
+  .uhr svg{width:38mm;height:38mm;display:block}
+  .uhr .nr{font-size:11px;color:var(--grafit);align-self:flex-start}
+  .uhr .antwort{
+    font-size:16px;letter-spacing:.02em;
+    display:flex;align-items:baseline;gap:4px;
+  }
+  .schreiblinie{
+    display:inline-block;min-width:18mm;border-bottom:1.5px solid var(--ink);
+  }
+  .uhr .vorgabe{font-size:18px;font-weight:700}
+  .uhr .tageszeit{font-size:11px;color:var(--grafit);margin-top:-2mm}
+  .loesungen .uhr .antwort{color:var(--rot);font-weight:700}
+
+  .loesungen .kopf{border-bottom-color:var(--rot)}
+
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;padding:16px 12px 60px}
+    .panel{position:static}
+    .sheet{padding:14mm 10mm}
+  }
+
+  @media print{
+    @page{size:A4 portrait;margin:14mm}
+    body{background:#fff}
+    .layout{display:block;max-width:none;padding:0}
+    .panel{display:none}
+    .blattstapel{gap:0}
+    .sheet{box-shadow:none;padding:0;background:#fff}
+    .sheet+.sheet{break-before:page}
+    .uhr{break-inside:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <form class="panel" id="panel" onsubmit="return false">
+    <h1>Uhrzeit-Generator</h1>
+    <p class="sub">Uhren ablesen oder Zeiger einzeichnen, drucken oder als PDF sichern.</p>
+
+    <fieldset>
+      <legend>Inhalt</legend>
+      <label>Überschrift
+        <input type="text" id="titel" value="Uhrzeit">
+      </label>
+      <label>Aufgabenart
+        <select id="art">
+          <option value="ablesen" selected>Uhr ablesen, Zeit aufschreiben</option>
+          <option value="einzeichnen">Zeit lesen, Zeiger einzeichnen</option>
+          <option value="gemischt">gemischt</option>
+        </select>
+      </label>
+      <label>Genauigkeit
+        <select id="genau">
+          <option value="stunde">volle Stunden</option>
+          <option value="halb">halbe Stunden</option>
+          <option value="viertel" selected>Viertelstunden</option>
+          <option value="fuenf">5-Minuten-Schritte</option>
+          <option value="minute">minutengenau</option>
+        </select>
+      </label>
+      <label>Anzahl Uhren
+        <input type="number" id="anzahl" value="9" min="3" max="24" step="1">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Darstellung</legend>
+      <label>Tageszeit
+        <select id="tageszeit">
+          <option value="vormittag" selected>vormittags (1:00 bis 12:59)</option>
+          <option value="nachmittag">nachmittags (13:00 bis 23:59)</option>
+          <option value="gemischt">gemischt</option>
+        </select>
+      </label>
+      <div class="check"><input type="checkbox" id="loesung" checked><label for="loesung" style="margin:0">Lösungsblatt anhängen</label></div>
+      <div class="row">
+        <label>Spalten
+          <select id="spalten">
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+        <label>Blattnummer
+          <input type="number" id="seed" value="1" min="1" step="1">
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="buttons">
+      <button type="button" id="neu">Neu würfeln</button>
+      <button type="button" class="primary" id="drucken">Drucken / PDF</button>
+    </div>
+
+    <p class="hinweis" id="hinweis"></p>
+    <p class="fuss">Gleiche Blattnummer und gleiche Einstellungen ergeben immer dasselbe Blatt. Im Druckdialog als Ziel „Als PDF speichern“ wählen.</p>
+  </form>
+
+  <div class="blattstapel" id="stapel"></div>
+</div>
+
+<script>
+/* ---------- Zufall mit Startwert, damit Blätter reproduzierbar sind ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const ganz = (rng, min, max) => min + Math.floor(rng() * (max - min + 1));
+const wahl = (rng, liste) => liste[Math.floor(rng() * liste.length)];
+
+/* ---------- Zeiten bauen ---------- */
+const MINUTEN = {
+  stunde:  [0],
+  halb:    [0, 30],
+  viertel: [0, 15, 30, 45],
+  fuenf:   [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+  minute:  Array.from({length:60}, (_, i) => i)
+};
+
+function baueZeiten(rng, opt){
+  const raus = [], gesehen = new Set();
+  const minuten = MINUTEN[opt.genau];
+  const maxVerschieden = minuten.length * 12;
+  let fehlversuche = 0;
+  while (raus.length < Math.min(opt.anzahl, maxVerschieden) && fehlversuche < 2000){
+    let h;
+    if (opt.tageszeit === 'nachmittag')      h = ganz(rng, 13, 23);
+    else if (opt.tageszeit === 'gemischt')   h = rng() < 0.5 ? ganz(rng, 1, 12) : ganz(rng, 13, 23);
+    else                                     h = ganz(rng, 1, 12);
+    const m = wahl(rng, minuten);
+    const key = (h % 12) + ':' + m;         /* gleiche Zeigerstellung nur einmal */
+    if (gesehen.has(key)){ fehlversuche++; continue; }
+    gesehen.add(key);
+    const typ = opt.art === 'gemischt' ? (rng() < 0.5 ? 'ablesen' : 'einzeichnen') : opt.art;
+    raus.push({ h, m, typ });
+  }
+  return raus;
+}
+
+const digital = z => `${z.h}:${String(z.m).padStart(2, '0')}`;
+
+/* ---------- Uhr als SVG ---------- */
+function uhrSvg(z, mitZeigern, rot){
+  const teile = [];
+  teile.push('<circle cx="50" cy="50" r="46" fill="#fff" stroke="var(--ink)" stroke-width="2"/>');
+
+  for (let i = 0; i < 60; i++){
+    const winkel = i * 6 * Math.PI / 180;
+    const gross = i % 5 === 0;
+    const r1 = gross ? 40.5 : 43;
+    const x1 = 50 + r1 * Math.sin(winkel), y1 = 50 - r1 * Math.cos(winkel);
+    const x2 = 50 + 45 * Math.sin(winkel), y2 = 50 - 45 * Math.cos(winkel);
+    teile.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--ink)" stroke-width="${gross ? 1.6 : 0.6}"/>`);
+  }
+
+  for (let i = 1; i <= 12; i++){
+    const winkel = i * 30 * Math.PI / 180;
+    const x = 50 + 33 * Math.sin(winkel), y = 50 - 33 * Math.cos(winkel);
+    teile.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dy="0.36em" font-size="9.5" font-weight="700" font-family="var(--sans)" fill="var(--ink)">${i}</text>`);
+  }
+
+  if (mitZeigern){
+    const farbe = rot ? 'var(--rot)' : 'var(--ink)';
+    const stunde = ((z.h % 12) + z.m / 60) * 30;
+    const minute = z.m * 6;
+    teile.push(`<line x1="50" y1="50" x2="50" y2="29" stroke="${farbe}" stroke-width="4" stroke-linecap="round" transform="rotate(${stunde.toFixed(1)} 50 50)"/>`);
+    teile.push(`<line x1="50" y1="50" x2="50" y2="14" stroke="${farbe}" stroke-width="2.4" stroke-linecap="round" transform="rotate(${minute} 50 50)"/>`);
+    teile.push(`<circle cx="50" cy="50" r="2.6" fill="${farbe}"/>`);
+  }
+
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="Ziffernblatt">${teile.join('')}</svg>`;
+}
+
+/* ---------- Darstellung ---------- */
+/* Im gemischten Modus braucht jede Ablese-Uhr einen Hinweis, sonst ist
+   nicht entscheidbar, ob z. B. 3:40 oder 15:40 gemeint ist. */
+function aufgabeHtml(z, nr, tageszeitModus){
+  if (z.typ === 'ablesen'){
+    let tageszeit = '';
+    if (tageszeitModus === 'gemischt'){
+      tageszeit = `<span class="tageszeit">${z.h > 12 ? 'nachmittags' : 'vormittags'}</span>`;
+    } else if (z.h > 12){
+      tageszeit = '<span class="tageszeit">nachmittags</span>';
+    }
+    return `<div class="uhr">
+      <span class="nr">${nr}.</span>
+      ${uhrSvg(z, true, false)}
+      ${tageszeit}
+      <span class="antwort"><span class="schreiblinie"></span> Uhr</span>
+    </div>`;
+  }
+  return `<div class="uhr">
+    <span class="nr">${nr}.</span>
+    ${uhrSvg(z, false, false)}
+    <span class="vorgabe">${digital(z)} Uhr</span>
+  </div>`;
+}
+
+function loesungHtml(z, nr){
+  return `<div class="uhr">
+    <span class="nr">${nr}.</span>
+    ${uhrSvg(z, true, z.typ === 'einzeichnen')}
+    <span class="antwort">${digital(z)} Uhr</span>
+  </div>`;
+}
+
+const GENAU_NAMEN = {
+  stunde:'volle Stunden', halb:'halbe Stunden', viertel:'Viertelstunden',
+  fuenf:'5-Minuten-Schritte', minute:'minutengenau'
+};
+const ART_NAMEN = {
+  ablesen:'Uhr ablesen', einzeichnen:'Zeiger einzeichnen', gemischt:'ablesen und einzeichnen'
+};
+
+/* ---------- Zusammenbauen ---------- */
+const $ = id => document.getElementById(id);
+
+function einstellungen(){
+  return {
+    titel: $('titel').value.trim() || 'Uhrzeit',
+    art: $('art').value,
+    genau: $('genau').value,
+    anzahl: Math.max(3, Math.min(24, parseInt($('anzahl').value, 10) || 9)),
+    tageszeit: $('tageszeit').value,
+    loesung: $('loesung').checked,
+    spalten: parseInt($('spalten').value, 10),
+    seed: Math.max(1, parseInt($('seed').value, 10) || 1)
+  };
+}
+
+function zeichne(){
+  const opt = einstellungen();
+  const rng = mulberry32(opt.seed * 2654435761 + opt.anzahl * 97 + opt.genau.length * 13 + opt.tageszeit.length * 7);
+  const zeiten = baueZeiten(rng, opt);
+
+  const hinweis = $('hinweis');
+  const fehlend = zeiten.length < opt.anzahl;
+  hinweis.classList.toggle('an', fehlend);
+  if (fehlend){
+    hinweis.textContent = `Bei dieser Genauigkeit gibt es nur ${zeiten.length} verschiedene Zeigerstellungen. Feinere Genauigkeit wählen oder Anzahl verringern.`;
+  }
+
+  const TAGESZEIT_NAMEN = { vormittag:'vormittags', nachmittag:'nachmittags', gemischt:'vor- und nachmittags' };
+  const meta = `${ART_NAMEN[opt.art]} · ${GENAU_NAMEN[opt.genau]} · ${TAGESZEIT_NAMEN[opt.tageszeit]} · Blatt ${opt.seed}`;
+  const anleitung = opt.art === 'ablesen'
+    ? 'Wie spät ist es? Schreibe die Zeit auf.'
+    : opt.art === 'einzeichnen'
+      ? 'Zeichne die Zeiger für die angegebene Zeit ein.'
+      : 'Bei leeren Uhren die Zeiger einzeichnen, sonst die Zeit aufschreiben.';
+
+  let html = `<article class="sheet">
+      <header class="kopf">
+        <div>
+          <h2>${opt.titel}</h2>
+          <div class="meta">${meta}</div>
+        </div>
+        <div class="felder">
+          <span>Name<span class="feldlinie"></span></span>
+          <span>Datum<span class="feldlinie kurz"></span></span>
+        </div>
+      </header>
+      <section class="block">
+        <h3 class="block-titel">${anleitung}</h3>
+        <div class="uhrgitter" style="grid-template-columns:repeat(${opt.spalten},minmax(0,1fr))">
+          ${zeiten.map((z, i) => aufgabeHtml(z, i + 1, opt.tageszeit)).join('')}
+        </div>
+      </section>
+    </article>`;
+
+  if (opt.loesung && zeiten.length){
+    html += `<article class="sheet loesungen">
+        <header class="kopf">
+          <div>
+            <h2>Lösungen</h2>
+            <div class="meta">zu „${opt.titel}“ · Blatt ${opt.seed}</div>
+          </div>
+        </header>
+        <section class="block">
+          <h3 class="block-titel">Eingezeichnete Zeiger in Rot</h3>
+          <div class="uhrgitter" style="grid-template-columns:repeat(${opt.spalten},minmax(0,1fr))">
+            ${zeiten.map((z, i) => loesungHtml(z, i + 1)).join('')}
+          </div>
+        </section>
+      </article>`;
+  }
+
+  $('stapel').innerHTML = html;
+}
+
+$('panel').addEventListener('input', zeichne);
+$('panel').addEventListener('change', zeichne);
+$('neu').addEventListener('click', () => {
+  $('seed').value = Math.floor(Math.random() * 9000) + 1000;
+  zeichne();
+});
+$('drucken').addEventListener('click', () => window.print());
+
+zeichne();
+</script>
+</body>
+</html>

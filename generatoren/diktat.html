@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diktat-Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16365f;
+    --paper:#fcfbf7;
+    --karo:#b6d1ec;
+    --rot:#c4342c;
+    --grafit:#5a616b;
+    --panel:#e9e6dd;
+    --linie:#cfcabb;
+    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Fraunces", Georgia, serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:#dedbd1;
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+    max-width:1220px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Bedienfeld ---------- */
+  .panel{
+    position:sticky; top:28px;
+    background:var(--panel);
+    border:1px solid #cfcabb;
+    border-radius:2px;
+    padding:22px 20px 24px;
+  }
+  .panel h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:22px;
+    line-height:1.15;
+    margin:0 0 2px;
+    letter-spacing:-.01em;
+  }
+  .panel .sub{
+    font-size:12.5px; color:var(--grafit);
+    margin:0 0 20px;
+  }
+  fieldset{border:0;padding:0;margin:0 0 16px}
+  legend{
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--grafit); font-weight:700; padding:0 0 7px;
+  }
+  label{display:block;font-size:13.5px;margin:0 0 8px}
+  select,input[type=number],input[type=text]{
+    width:100%; font-family:var(--sans); font-size:14px;
+    padding:7px 9px; border:1px solid #b9b3a3; border-radius:2px;
+    background:#fff; color:var(--ink);
+  }
+  select:focus,input:focus,button:focus-visible{
+    outline:2px solid var(--ink); outline-offset:1px;
+  }
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:0 0 8px}
+  .check input{margin:2px 0 0;accent-color:var(--ink)}
+  .buttons{display:flex;gap:8px;margin-top:20px}
+  button{
+    flex:1; font-family:var(--sans); font-size:14px; font-weight:700;
+    padding:10px 8px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--ink); background:#fff; color:var(--ink);
+  }
+  button.primary{background:var(--ink);color:var(--paper)}
+  button:hover{filter:brightness(.94)}
+  .hinweis{
+    margin-top:14px; font-size:12.5px; line-height:1.45;
+    color:var(--rot); display:none;
+  }
+  .hinweis.an{display:block}
+  .fuss{margin-top:18px;font-size:11.5px;line-height:1.5;color:var(--grafit)}
+
+  /* ---------- Blatt ---------- */
+  .blattstapel{display:flex;flex-direction:column;gap:24px}
+  .sheet{
+    background:var(--paper);
+    padding:18mm 16mm 20mm;
+    box-shadow:0 2px 14px rgba(20,30,50,.18);
+    border-radius:1px;
+  }
+  .kopf{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:6px;
+  }
+  .kopf h2{
+    font-family:var(--display);font-weight:700;font-size:26px;
+    margin:0;letter-spacing:-.015em;
+  }
+  .kopf .meta{font-size:11.5px;color:var(--grafit);margin-top:4px}
+  .felder{display:flex;gap:16px;font-size:12px;color:var(--grafit);white-space:nowrap}
+  .felder span{display:inline-block}
+  .feldlinie{display:inline-block;width:34mm;border-bottom:1px solid var(--linie);margin-left:5px}
+  .feldlinie.kurz{width:22mm}
+
+  .block{margin-top:22px}
+  .block-titel{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--grafit);
+    display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  }
+  .block-titel::after{content:"";flex:1;height:1px;background:var(--linie)}
+
+  /* Diktattext auf dem Vorleseblatt */
+  .diktattext{
+    font-size:17px;line-height:2.1;letter-spacing:.01em;
+    max-width:150mm;
+  }
+  .diktattext b{color:var(--rot)}
+  .satznr{
+    font-size:10.5px;color:var(--grafit);
+    vertical-align:super;margin-right:3px;
+  }
+  .vorlese-tipp{
+    margin-top:26px;padding:10px 14px;
+    border-left:3px solid var(--linie);
+    font-size:12.5px;line-height:1.6;color:var(--grafit);
+  }
+
+  /* Lückentext */
+  .lueckentext{font-size:18px;line-height:2.4;max-width:150mm}
+  .luecke{
+    display:inline-block;border-bottom:1.5px solid var(--ink);
+    vertical-align:baseline;margin:0 2px;
+  }
+  .wortpool{
+    margin-top:26px;padding:12px 14px;border:1px solid var(--linie);
+    font-size:14px;max-width:150mm;
+  }
+  .wortpool .pool-titel{
+    font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--grafit);display:block;margin-bottom:8px;
+  }
+  .wortpool .pool-woerter{
+    display:flex;flex-wrap:wrap;gap:6px 18px;
+  }
+  .wortpool .pool-woerter span{white-space:nowrap}
+
+  /* Schreiblinien */
+  .lineatur{margin-top:8mm}
+  .zeile12{
+    height:12mm;margin-bottom:7mm;
+    background:
+      linear-gradient(var(--karo),var(--karo)) left 0 / 100% .35mm no-repeat,
+      linear-gradient(var(--karo),var(--karo)) left 4mm / 100% .35mm no-repeat,
+      linear-gradient(var(--karo),var(--karo)) left 8mm / 100% .35mm no-repeat,
+      linear-gradient(var(--ink),var(--ink)) left bottom / 100% .4mm no-repeat,
+      linear-gradient(rgba(182,209,236,.16),rgba(182,209,236,.16)) left 4mm / 100% 4mm no-repeat;
+  }
+  .zeile34{
+    height:10.5mm;
+    border-bottom:.4mm solid var(--karo);
+  }
+
+  .loesungen .kopf{border-bottom-color:var(--rot)}
+
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;padding:16px 12px 60px}
+    .panel{position:static}
+    .sheet{padding:14mm 10mm}
+  }
+
+  @media print{
+    @page{size:A4 portrait;margin:14mm}
+    body{background:#fff}
+    .layout{display:block;max-width:none;padding:0}
+    .panel{display:none}
+    .blattstapel{gap:0}
+    .sheet{box-shadow:none;padding:0;background:#fff}
+    .sheet+.sheet{break-before:page}
+    .zeile12,.zeile34,.diktattext p{break-inside:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <form class="panel" id="panel" onsubmit="return false">
+    <h1>Diktat-Generator</h1>
+    <p class="sub">Diktate zusammenstellen, drucken oder als PDF sichern.</p>
+
+    <fieldset>
+      <legend>Inhalt</legend>
+      <label>Überschrift
+        <input type="text" id="titel" value="Diktat">
+      </label>
+      <label>Klassenstufe
+        <select id="stufe">
+          <option value="12">Klasse 1 und 2</option>
+          <option value="34" selected>Klasse 3 und 4</option>
+        </select>
+      </label>
+      <label>Schwerpunkt
+        <select id="fokus"></select>
+      </label>
+      <label>Wortanzahl (ungefähr)
+        <input type="number" id="woerter" value="50" min="15" max="150" step="5">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Blätter</legend>
+      <div class="check"><input type="checkbox" id="schreibblatt" checked><label for="schreibblatt" style="margin:0">Schreibblatt mit Lineatur</label></div>
+      <div class="check"><input type="checkbox" id="lueckenblatt"><label for="lueckenblatt" style="margin:0">Lückentext zum Selbstüben</label></div>
+      <div class="check"><input type="checkbox" id="wortpool"><label for="wortpool" style="margin:0">Wortpool unter dem Lückentext</label></div>
+      <div class="check"><input type="checkbox" id="markieren" checked><label for="markieren" style="margin:0">Schwerpunktwörter im Vorleseblatt rot zeigen</label></div>
+      <div class="row">
+        <label>Sätze nummerieren
+          <select id="nummern">
+            <option value="ja" selected>ja</option>
+            <option value="nein">nein</option>
+          </select>
+        </label>
+        <label>Blattnummer
+          <input type="number" id="seed" value="1" min="1" step="1">
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="buttons">
+      <button type="button" id="neu">Neu würfeln</button>
+      <button type="button" class="primary" id="drucken">Drucken / PDF</button>
+    </div>
+
+    <p class="hinweis" id="hinweis"></p>
+    <p class="fuss">Gleiche Blattnummer und gleiche Einstellungen ergeben immer dasselbe Diktat. Im Druckdialog als Ziel „Als PDF speichern“ wählen.</p>
+  </form>
+
+  <div class="blattstapel" id="stapel"></div>
+</div>
+
+<script>
+/* ---------- Zufall mit Startwert, damit Blätter reproduzierbar sind ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function mische(rng, liste){
+  const kopie = liste.slice();
+  for (let i = kopie.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [kopie[i], kopie[j]] = [kopie[j], kopie[i]];
+  }
+  return kopie;
+}
+
+/* ---------- Satzsammlung ----------
+   Wörter zwischen Sternchen sind die Schwerpunktwörter.
+   Sie werden im Vorleseblatt rot gezeigt und im Lückentext ausgelassen. */
+const SAETZE = {
+  '12': {
+    gemischt: [
+      'Die *Sonne* lacht am blauen *Himmel*.',
+      'Wir gehen mit dem *Hund* in den *Park*.',
+      '*Oma* backt einen *Kuchen* für uns.',
+      'Der kleine *Vogel* singt im *Baum*.',
+      'Im *Garten* blühen rote *Blumen*.',
+      '*Papa* liest mir eine *Geschichte* vor.',
+      'Die *Kinder* spielen auf dem *Hof*.',
+      'Mein *Freund* hat ein neues *Rad*.',
+      'Am *Abend* gehen wir früh ins *Bett*.',
+      'Die *Ente* schwimmt auf dem *Teich*.',
+      'Der *Regen* trommelt an das *Fenster*.',
+      'Zum *Frühstück* esse ich ein *Brot* mit *Honig*.'
+    ],
+    doppel: [
+      'Die *Sonne* scheint auf die *nasse* Wiese.',
+      '*Anna* *rennt* schnell zur Schule.',
+      'Der *Ball* *rollt* unter die Bank.',
+      'Im *Sommer* *schwimmen* wir im See.',
+      'Die Katze *schnurrt* auf dem *Bett*.',
+      'Der *Hammer* liegt im *Keller*.',
+      'Wir essen *mittags* eine *Suppe*.',
+      'Die *Puppe* sitzt im Wagen.',
+      'Der *Affe* *klettert* auf den Ast.',
+      'Opa hat eine *Brille* auf der Nase.',
+      'Die Mutter *füllt* die *Kanne* mit *Wasser*.',
+      'Im Winter *fallen* dicke Flocken.'
+    ],
+    cktz: [
+      'Die *Katze* *sitzt* auf dem *Platz*.',
+      'Der *Bäcker* *backt* *leckere* Brötchen.',
+      'Max *putzt* sich die Zähne.',
+      'Die *Mütze* liegt in der *Ecke*.',
+      'Der *Wecker* *tickt* laut.',
+      'Wir *pflücken* Blumen für Oma.',
+      'Der *Spatz* *pickt* Körner vom Boden.',
+      'Lena hüpft über die *Pfütze*.',
+      'Im *Rucksack* *steckt* ein *Päckchen*.',
+      'Der Zug fährt über die *Brücke*.',
+      'Die Hexe hat eine *spitze* Nase.',
+      'Wir *sitzen* auf der *Decke* im Park.'
+    ],
+    ie: [
+      'Die *Biene* *fliegt* zur Blume.',
+      'Marie *spielt* mit den *Tieren*.',
+      'Der *Riese* hat große *Stiefel*.',
+      'Wir singen ein schönes *Lied*.',
+      'Das *Papier* *liegt* auf dem Tisch.',
+      'Die *Ziege* frisst *viel* Gras.',
+      'Der *Brief* ist für meine *Familie*.',
+      'Am Fenster hängt ein *Spiegel*.',
+      'Die *Zwiebel* *liegt* neben dem *Sieb*.',
+      '*Sieben* Vögel sitzen auf dem *Giebel*.',
+      'Das *Fieber* ist *wieder* weg.',
+      'Der *Dieb* rennt über die *Wiese*.'
+    ],
+    gross: [
+      'Der *Hund* und die *Katze* schlafen im *Garten*.',
+      'Meine *Schwester* malt ein *Bild* mit bunten *Stiften*.',
+      'Auf dem *Tisch* stehen *Teller* und *Tassen*.',
+      'Im *Zoo* sehen wir *Löwen* und *Elefanten*.',
+      'Der *Junge* wirft den *Ball* über den *Zaun*.',
+      'Die *Kinder* bauen eine *Burg* aus *Sand*.',
+      'Am *Morgen* trinkt *Papa* einen *Kaffee*.',
+      'Die *Lehrerin* schreibt *Wörter* an die *Tafel*.',
+      'Im *Herbst* fallen die *Blätter* von den *Bäumen*.',
+      'Vor dem *Haus* steht ein rotes *Auto*.'
+    ]
+  },
+  '34': {
+    gemischt: [
+      'Am *Wochenende* besuchen wir unsere *Großeltern* auf dem Land.',
+      'Der *Herbstwind* fegt die bunten *Blätter* über den *Schulhof*.',
+      'In der *Bücherei* leihen wir uns spannende *Geschichten* aus.',
+      'Nach dem *Gewitter* spannt sich ein *Regenbogen* über das Tal.',
+      'Die *Feuerwehr* rückt mit lautem *Signal* zur *Übung* aus.',
+      'Mein bester *Freund* wohnt gleich um die *Ecke*.',
+      'Zum *Frühstück* gibt es frische *Brötchen* mit *Honig*.',
+      'Die *Klasse* plant einen *Ausflug* in den *Tierpark*.',
+      'Abends leuchten die *Sterne* über der *Stadt*.',
+      'Der *Briefträger* bringt ein *Päckchen* für meine *Schwester*.',
+      'Im *Frühling* bauen die *Vögel* ihre *Nester*.',
+      'Nach der *Schule* üben wir für das *Fußballturnier*.'
+    ],
+    dehnh: [
+      'Wir *fahren* mit der *Bahn* in die Stadt.',
+      'Der *Lehrer* *erzählt* eine spannende Geschichte.',
+      'Das *Huhn* legt jeden Morgen ein Ei.',
+      '*Ohne* *Zahnbürste* *fahren* wir nicht in den Urlaub.',
+      'Der Bauer *mäht* die Wiese hinter dem Hof.',
+      'Im *Frühjahr* *blühen* die Kirschbäume.',
+      'Die *Kuh* steht *ruhig* auf der Weide.',
+      'Mein Bruder *wohnt* in der *Nähe* vom *Bahnhof*.',
+      'Wir *zahlen* an der Kasse und *nehmen* die Tüten mit.',
+      'Der *Zahnarzt* lobt meine sauberen *Zähne*.',
+      'Die *Ohren* des Hasen sind *sehr* lang.',
+      'Beim Wandern *führt* uns ein schmaler Weg zum See.'
+    ],
+    sz: [
+      '*Draußen* *gießt* es in Strömen.',
+      'Wir *essen* *süße* *Nüsse* und *weiße* Schokolade.',
+      'Der *Fluss* *fließt* an der *großen* *Straße* vorbei.',
+      'Ich *weiß*, *dass* du das Rätsel lösen kannst.',
+      'Der *Fußball* *passt* nicht mehr in die Tasche.',
+      'Meine *Großmutter* *schließt* die Tür zum *Schloss*.',
+      'Nach dem *Essen* *messen* wir das *Wasser* ab.',
+      'Der *große* Riese hat kalte *Füße*.',
+      'Beim *Spaß* im Schwimmbad sind alle *nass* geworden.',
+      'Die *Klasse* *grüßt* die neue Lehrerin.',
+      'Wir *wissen*, wo der *Schlüssel* liegt.',
+      'Zum *Schluss* *gießen* wir die Blumen im Garten.'
+    ],
+    ieh: [
+      'Er *sieht* den Zug schon von Weitem.',
+      'Das Pferd *zieht* den schweren Wagen.',
+      'Es *geschieht* selten, dass *Vieh* auf der Straße steht.',
+      'Sie *fliehen* vor dem Gewitter ins Haus.',
+      'Wir *liehen* uns Bücher aus der Bücherei.',
+      '*Niemand* *sieht* den kleinen Igel im Laub.',
+      'Die Familie *bezieht* im Mai die neue Wohnung.',
+      '*Empfiehlst* du mir *dieses* Buch?',
+      'Der Gärtner *zieht* junge Pflanzen im Beet.',
+      '*Viele* *Tiere* *verkriechen* sich im Winter.',
+      'Das Reh *flieht* *tief* in den Wald.',
+      'Am Abend *ziehen* dunkle Wolken auf.'
+    ],
+    vf: [
+      'Der *Vogel* *fliegt* *vor* das *Fenster*.',
+      '*Vater* *füllt* *vier* *Flaschen* mit *frischem* Wasser.',
+      '*Viele* Wolken *verdecken* die Sonne.',
+      '*Vor* dem *Verkauf* prüfen wir die *Fahrräder*.',
+      'Die *Vase* mit den Blumen steht auf dem *Fensterbrett*.',
+      'Im *Frühling* *verlieren* *viele* *Vögel* ihre *Federn*.',
+      'Der *Verkäufer* *verpackt* die *frischen* *Fische*.',
+      '*Vor* dem *Fest* *verzieren* wir den *Flur*.',
+      'Das *Fahrrad* *von* *Finn* ist *violett*.',
+      '*Viele* *Familien* *verreisen* in den *Ferien*.'
+    ],
+    doppel: [
+      'Der *Wettkampf* *beginnt* um elf Uhr.',
+      'Die *Mannschaft* *rennt* über den *nassen* Rasen.',
+      'In der *Pfanne* brutzeln knusprige *Kartoffeln*.',
+      'Der *Kellner* bringt die *volle* *Kanne*.',
+      'Der *dünne* *Stoff* *flattert* im Wind.',
+      'Wir *sammeln* *Stimmen* für das *Sommerfest*.',
+      'Die *Sonne* *brennt* auf die *Terrasse*.',
+      'Mein Onkel *schleppt* schwere *Koffer* zum Auto.',
+      'Die *Schwimmerin* krault durch das kühle *Wasser*.',
+      'Im *Sommer* *summen* *Hummeln* im Garten.'
+    ],
+    gross: [
+      'Das *Lachen* der *Kinder* hört man bis auf die *Straße*.',
+      'Beim *Laufen* im *Wald* muss man auf *Wurzeln* achten.',
+      'Am *Abend* gehen wir zum *Essen* in ein *Lokal*.',
+      'Das *Lesen* macht mir mehr *Spaß* als das *Rechnen*.',
+      'Nach dem *Aufstehen* putze ich mir die *Zähne*.',
+      'Etwas *Schönes* wartet auf dich im *Wohnzimmer*.',
+      'Beim *Backen* hilft mir mein kleiner *Bruder*.',
+      'Alles *Gute* wünschen wir dir zum *Geburtstag*.',
+      'Das *Turnen* in der *Halle* fällt heute aus.',
+      'Vor dem *Schlafen* liest *Mama* eine *Geschichte* vor.'
+    ]
+  }
+};
+
+const FOKUS_NAMEN = {
+  '12': [
+    ['gemischt', 'Gemischt'],
+    ['doppel',   'Doppelte Mitlaute (ll, mm, nn …)'],
+    ['cktz',     'Wörter mit ck und tz'],
+    ['ie',       'Wörter mit ie'],
+    ['gross',    'Groß- und Kleinschreibung']
+  ],
+  '34': [
+    ['gemischt', 'Gemischt'],
+    ['dehnh',    'Dehnungs-h (ah, eh, oh …)'],
+    ['sz',       'ß und ss'],
+    ['ieh',      'ie und ieh'],
+    ['vf',       'v und f'],
+    ['doppel',   'Doppelte Mitlaute'],
+    ['gross',    'Groß- und Kleinschreibung']
+  ]
+};
+
+/* ---------- Sätze zerlegen ---------- */
+function zerlege(satz){
+  /* zerlegt "Die *Katze* sitzt." in Wortstücke mit Markierung */
+  const stuecke = [];
+  const teile = satz.split('*');
+  teile.forEach((teil, i) => {
+    if (!teil) return;
+    stuecke.push({ text: teil, fokus: i % 2 === 1 });
+  });
+  const woerter = satz.replaceAll('*', '').trim().split(/\s+/).length;
+  return { stuecke, woerter };
+}
+
+/* ---------- Auswahl nach Wortanzahl ---------- */
+function waehleSaetze(rng, pool, zielWoerter){
+  const gemischt = mische(rng, pool).map(zerlege);
+  const auswahl = [];
+  let summe = 0;
+  for (const satz of gemischt){
+    if (summe >= zielWoerter) break;
+    auswahl.push(satz);
+    summe += satz.woerter;
+  }
+  return { auswahl, summe, maxWoerter: gemischt.reduce((s, x) => s + x.woerter, 0) };
+}
+
+/* ---------- Darstellung ---------- */
+function escapeHtml(s){
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function vorleseHtml(auswahl, markieren, nummern){
+  const saetze = auswahl.map((satz, i) => {
+    const text = satz.stuecke.map(st =>
+      st.fokus && markieren ? `<b>${escapeHtml(st.text)}</b>` : escapeHtml(st.text)
+    ).join('');
+    const nr = nummern ? `<span class="satznr">${i + 1}</span>` : '';
+    return nr + text;
+  }).join(' ');
+  return `<div class="diktattext"><p>${saetze}</p></div>`;
+}
+
+function lueckenHtml(auswahl, nummern){
+  const saetze = auswahl.map((satz, i) => {
+    const text = satz.stuecke.map(st => {
+      if (!st.fokus) return escapeHtml(st.text);
+      const breite = Math.max(12, Math.round(st.text.length * 3.6));
+      return `<span class="luecke" style="min-width:${breite}mm"></span>`;
+    }).join('');
+    const nr = nummern ? `<span class="satznr">${i + 1}</span>` : '';
+    return nr + text;
+  }).join(' ');
+  return `<div class="lueckentext"><p>${saetze}</p></div>`;
+}
+
+function wortpoolHtml(rng, auswahl){
+  const woerter = [];
+  auswahl.forEach(satz => satz.stuecke.forEach(st => {
+    if (st.fokus) woerter.push(st.text.trim());
+  }));
+  const einmalig = [...new Set(woerter)];
+  const gemischt = mische(rng, einmalig);
+  return `<div class="wortpool">
+    <span class="pool-titel">Diese Wörter fehlen</span>
+    <div class="pool-woerter">${gemischt.map(w => `<span>${escapeHtml(w)}</span>`).join(' ')}</div>
+  </div>`;
+}
+
+function lineaturHtml(stufe, woerter){
+  const proZeile = stufe === '12' ? 5 : 8;
+  const zeilen = Math.min(stufe === '12' ? 13 : 18, Math.ceil(woerter / proZeile) + 2);
+  const klasse = stufe === '12' ? 'zeile12' : 'zeile34';
+  let html = '<div class="lineatur">';
+  for (let i = 0; i < zeilen; i++) html += `<div class="${klasse}"></div>`;
+  return html + '</div>';
+}
+
+function fokusName(stufe, fokus){
+  const eintrag = FOKUS_NAMEN[stufe].find(([wert]) => wert === fokus);
+  return eintrag ? eintrag[1] : fokus;
+}
+
+/* ---------- Zusammenbauen ---------- */
+const $ = id => document.getElementById(id);
+
+function fuelleFokus(){
+  const stufe = $('stufe').value;
+  const alt = $('fokus').value;
+  $('fokus').innerHTML = FOKUS_NAMEN[stufe]
+    .map(([wert, name]) => `<option value="${wert}">${name}</option>`).join('');
+  if (FOKUS_NAMEN[stufe].some(([wert]) => wert === alt)) $('fokus').value = alt;
+}
+
+function einstellungen(){
+  return {
+    titel: $('titel').value.trim() || 'Diktat',
+    stufe: $('stufe').value,
+    fokus: $('fokus').value,
+    woerter: Math.max(15, Math.min(150, parseInt($('woerter').value, 10) || 50)),
+    schreibblatt: $('schreibblatt').checked,
+    lueckenblatt: $('lueckenblatt').checked,
+    wortpool: $('wortpool').checked,
+    markieren: $('markieren').checked,
+    nummern: $('nummern').value === 'ja',
+    seed: Math.max(1, parseInt($('seed').value, 10) || 1)
+  };
+}
+
+function kopfHtml(opt, untertitel, mitFeldern){
+  const felder = mitFeldern ? `<div class="felder">
+      <span>Name<span class="feldlinie"></span></span>
+      <span>Datum<span class="feldlinie kurz"></span></span>
+    </div>` : '';
+  return `<header class="kopf">
+      <div>
+        <h2>${escapeHtml(opt.titel)}</h2>
+        <div class="meta">${untertitel}</div>
+      </div>
+      ${felder}
+    </header>`;
+}
+
+function zeichne(){
+  const opt = einstellungen();
+  const rng = mulberry32(opt.seed * 2654435761 + opt.woerter * 97 + opt.fokus.length * 13);
+
+  const pool = SAETZE[opt.stufe][opt.fokus] || [];
+  const { auswahl, summe, maxWoerter } = waehleSaetze(rng, pool, opt.woerter);
+
+  const hinweis = $('hinweis');
+  const zuWenig = summe < opt.woerter;
+  hinweis.classList.toggle('an', zuWenig);
+  if (zuWenig){
+    hinweis.textContent = `Für diesen Schwerpunkt reichen die Sätze nur für etwa ${maxWoerter} Wörter. Kleinere Wortanzahl wählen oder Schwerpunkt „Gemischt“ nehmen.`;
+  }
+
+  const meta = `${fokusName(opt.stufe, opt.fokus)} · ${summe} Wörter · Blatt ${opt.seed}`;
+  let html = '';
+
+  if (opt.schreibblatt){
+    html += `<article class="sheet">
+        ${kopfHtml(opt, meta, true)}
+        <section class="block">
+          <h3 class="block-titel">Schreibblatt</h3>
+          ${lineaturHtml(opt.stufe, summe)}
+        </section>
+      </article>`;
+  }
+
+  if (opt.lueckenblatt){
+    html += `<article class="sheet">
+        ${kopfHtml(opt, meta, true)}
+        <section class="block">
+          <h3 class="block-titel">Lückentext · fehlende Wörter eintragen</h3>
+          ${lueckenHtml(auswahl, opt.nummern)}
+          ${opt.wortpool ? wortpoolHtml(rng, auswahl) : ''}
+        </section>
+      </article>`;
+  }
+
+  html += `<article class="sheet loesungen">
+      ${kopfHtml({ titel: 'Diktattext' }, `zu „${escapeHtml(opt.titel)}“ · ${meta}`, false)}
+      <section class="block">
+        <h3 class="block-titel">Zum Vorlesen${opt.markieren ? ' · Schwerpunktwörter in Rot' : ''}</h3>
+        ${vorleseHtml(auswahl, opt.markieren, opt.nummern)}
+        <div class="vorlese-tipp">
+          So klappt das Diktieren: jeden Satz erst einmal ganz vorlesen, dann in kurzen
+          Abschnitten wiederholen, während das Kind schreibt. Zum Schluss den ganzen Satz
+          noch einmal lesen. Satzzeichen nur ansagen, wenn das noch geübt wird.
+        </div>
+      </section>
+    </article>`;
+
+  $('stapel').innerHTML = html;
+}
+
+$('stufe').addEventListener('change', () => { fuelleFokus(); zeichne(); });
+$('panel').addEventListener('input', zeichne);
+$('panel').addEventListener('change', zeichne);
+$('neu').addEventListener('click', () => {
+  $('seed').value = Math.floor(Math.random() * 9000) + 1000;
+  zeichne();
+});
+$('drucken').addEventListener('click', () => window.print());
+
+fuelleFokus();
+zeichne();
+</script>
+</body>
+</html>

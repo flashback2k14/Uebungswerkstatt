@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Übungswerkstatt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16365f;
+    --paper:#fcfbf7;
+    --karo:#b6d1ec;
+    --rot:#c4342c;
+    --grafit:#5a616b;
+    --panel:#e9e6dd;
+    --linie:#cfcabb;
+    --hintergrund:#dedbd1;
+    --sans:"Atkinson Hyperlegible", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display:"Fraunces", Georgia, serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--hintergrund);
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- Kopfzeile ---------- */
+  .kopfleiste{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    padding:14px 22px 12px;
+    background:var(--panel);
+    border-bottom:1px solid var(--linie);
+  }
+  .marke{
+    font-family:var(--display);font-weight:700;font-size:20px;
+    letter-spacing:-.01em;color:var(--ink);
+    text-decoration:none;
+  }
+  .marke:hover{text-decoration:underline}
+  .kopfleiste .claim{font-size:12.5px;color:var(--grafit)}
+
+  nav.reiter{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  .reiter a{
+    font-size:13.5px;font-weight:700;text-decoration:none;
+    color:var(--ink);
+    padding:7px 12px 6px;
+    border:1px solid transparent;border-radius:2px;
+  }
+  .reiter a:hover{border-color:var(--ink)}
+  .reiter a.aktiv{background:var(--ink);color:var(--paper)}
+  .reiter a:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+
+  /* ---------- Inhaltsbereich ---------- */
+  main{flex:1;display:flex;min-height:0}
+  .ansicht{flex:1;min-height:0;display:none}
+  .ansicht.aktiv{display:block}
+
+  iframe.generator{
+    width:100%;height:100%;border:0;display:block;background:var(--hintergrund);
+  }
+
+  /* ---------- Startseite ---------- */
+  .start{
+    overflow:auto;
+    padding:44px 22px 80px;
+  }
+  .start-innen{max-width:900px;margin:0 auto}
+  .start h1{
+    font-family:var(--display);font-weight:700;
+    font-size:34px;letter-spacing:-.015em;margin:0 0 6px;
+  }
+  .start .untertitel{
+    font-size:15px;color:var(--grafit);margin:0 0 36px;max-width:56ch;line-height:1.55;
+  }
+
+  .kartenraster{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:20px;
+  }
+  a.karte{
+    display:flex;gap:16px;align-items:stretch;
+    text-decoration:none;color:var(--ink);
+    background:var(--paper);
+    border:1px solid var(--linie);border-radius:2px;
+    padding:16px;
+    box-shadow:0 2px 10px rgba(20,30,50,.10);
+  }
+  a.karte:hover{border-color:var(--ink)}
+  a.karte:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+  /* Miniatur eines Blatts als Wiedererkennung */
+  .mini{
+    flex:0 0 58px;height:78px;align-self:center;
+    background:#fff;border:1px solid var(--linie);
+    padding:8px 7px;display:flex;flex-direction:column;gap:5px;
+  }
+  .mini i{display:block;height:2px;background:var(--karo);border-radius:1px}
+  .mini i.titelzeile{height:4px;background:var(--ink);width:70%}
+  .mini i.kurz{width:55%}
+  .mini i.rot{background:var(--rot);width:40%}
+
+  .karte .text{min-width:0}
+  .karte .fach{
+    font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--grafit);
+  }
+  .karte h2{
+    font-family:var(--display);font-weight:700;font-size:20px;
+    margin:2px 0 6px;letter-spacing:-.01em;
+  }
+  .karte p{margin:0;font-size:13px;line-height:1.5;color:var(--grafit)}
+
+  .start .fuss{
+    margin-top:44px;font-size:12.5px;line-height:1.6;color:var(--grafit);
+    border-top:1px solid var(--linie);padding-top:16px;max-width:64ch;
+  }
+  .start .fuss code{
+    font-family:ui-monospace, "SF Mono", Consolas, monospace;
+    font-size:11.5px;background:var(--panel);padding:1px 5px;border-radius:2px;
+  }
+
+  @media (max-width:640px){
+    .kopfleiste{padding:12px 14px 10px}
+    nav.reiter{margin-left:0;width:100%}
+    .start{padding:28px 14px 60px}
+    .start h1{font-size:27px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media print{
+    /* Gedruckt wird immer aus dem Generator heraus, nie die Shell. */
+    .kopfleiste,.start{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="kopfleiste">
+  <a class="marke" href="#/">Übungswerkstatt</a>
+  <span class="claim">Übungsblätter für zuhause · drucken oder als PDF sichern</span>
+  <nav class="reiter" id="reiter" aria-label="Generatoren"></nav>
+</header>
+
+<main id="inhalt">
+  <section class="ansicht start" id="ansicht-start">
+    <div class="start-innen">
+      <h1>Was soll geübt werden?</h1>
+      <p class="untertitel">
+        Jeder Generator baut ein fertiges Arbeitsblatt: Einstellungen wählen,
+        Vorschau prüfen, dann über den Knopf im Generator drucken oder als PDF speichern.
+      </p>
+      <div class="kartenraster" id="karten"></div>
+      <p class="fuss" id="startfuss"></p>
+    </div>
+  </section>
+</main>
+
+<script src="generatoren.js"></script>
+<script>
+const reiter = document.getElementById('reiter');
+const karten = document.getElementById('karten');
+const inhalt = document.getElementById('inhalt');
+
+/* ---------- Navigation und Startkarten aus der Registry bauen ---------- */
+function bauen(){
+  reiter.innerHTML = GENERATOREN.map(g =>
+    `<a href="#/${g.id}" data-id="${g.id}">${g.titel}</a>`
+  ).join('');
+
+  karten.innerHTML = GENERATOREN.map(g =>
+    `<a class="karte" href="#/${g.id}">
+      <span class="mini" aria-hidden="true">
+        <i class="titelzeile"></i><i></i><i class="kurz"></i><i></i><i class="rot"></i><i class="kurz"></i>
+      </span>
+      <span class="text">
+        <span class="fach">${g.fach}</span>
+        <h2>${g.titel}</h2>
+        <p>${g.beschreibung}</p>
+      </span>
+    </a>`
+  ).join('');
+
+  document.getElementById('startfuss').innerHTML =
+    `Neue Generatoren landen als HTML-Datei im Ordner <code>generatoren/</code> ` +
+    `und bekommen einen Eintrag in <code>generatoren.js</code>. Mehr dazu in der README.`;
+}
+
+/* ---------- Ansichten: Startseite plus ein Iframe je Generator ----------
+   Iframes bleiben nach dem ersten Öffnen bestehen. Wer zwischen
+   Generatoren wechselt, verliert seine Einstellungen dadurch nicht.   */
+const ansichten = { start: document.getElementById('ansicht-start') };
+
+function ansichtFuer(g){
+  if (ansichten[g.id]) return ansichten[g.id];
+  const abschnitt = document.createElement('section');
+  abschnitt.className = 'ansicht';
+  abschnitt.id = 'ansicht-' + g.id;
+  const rahmen = document.createElement('iframe');
+  rahmen.className = 'generator';
+  rahmen.src = g.datei;
+  rahmen.title = g.titel;
+  abschnitt.appendChild(rahmen);
+  inhalt.appendChild(abschnitt);
+  ansichten[g.id] = abschnitt;
+  return abschnitt;
+}
+
+function zeige(id){
+  const g = GENERATOREN.find(x => x.id === id);
+  const ziel = g ? ansichtFuer(g) : ansichten.start;
+
+  Object.values(ansichten).forEach(a => a.classList.remove('aktiv'));
+  ziel.classList.add('aktiv');
+
+  document.querySelectorAll('.reiter a').forEach(a =>
+    a.classList.toggle('aktiv', a.dataset.id === id)
+  );
+  document.title = g ? `${g.titel} · Übungswerkstatt` : 'Übungswerkstatt';
+}
+
+function route(){
+  const id = location.hash.replace(/^#\/?/, '');
+  zeige(id);
+}
+
+/* Strg+P auf der Shell an den offenen Generator durchreichen */
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p'){
+    const offen = document.querySelector('.ansicht.aktiv iframe');
+    if (offen){
+      e.preventDefault();
+      try { offen.contentWindow.print(); } catch (_) { /* fremde Herkunft: Browser übernimmt */ }
+    }
+  }
+});
+
+window.addEventListener('hashchange', route);
+bauen();
+route();
+</script>
+</body>
+</html>

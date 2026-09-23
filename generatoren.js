@@ -9,7 +9,8 @@
    Felder:
    id           eindeutig, wird Teil der URL (#/id)
    titel        Name in Navigation und auf der Startseite
-   fach         Kurzlabel, z. B. "Mathe" oder "Deutsch"
+   fach         Kurzlabel, z. B. "Mathe" oder "Deutsch"; die Startseite
+                gruppiert die Karten nach diesem Feld
    beschreibung ein bis zwei Sätze für die Startkarte
    datei        Pfad relativ zur index.html
 ------------------------------------------------------------------- */

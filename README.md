@@ -60,7 +60,7 @@ Die Schriften (Fraunces, Atkinson Hyperlegible) kommen von Google Fonts. Ohne In
 }
 ```
 
-Navigation, Startkarte und Route entstehen daraus automatisch. Die Shell muss nicht angefasst werden.
+Navigation, Startkarte und Route entstehen daraus automatisch. Auf der Startseite landet die Karte in der Gruppe ihres `fach`; ein neues Fach bekommt automatisch eine eigene Gruppe. Die Shell muss nicht angefasst werden.
 
 ## Konventionen für Generatoren
 

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mathe-Mix-Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16365f;
+    --paper:#fcfbf7;
+    --karo:#b6d1ec;
+    --rot:#c4342c;
+    --grafit:#5a616b;
+    --panel:#e9e6dd;
+    --linie:#cfcabb;
+    --sans: "Atkinson Hyperlegible", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Fraunces", Georgia, serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:#dedbd1;
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+    max-width:1220px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- Bedienfeld ---------- */
+  .panel{
+    position:sticky; top:28px;
+    max-height:calc(100vh - 56px); overflow-y:auto;
+    background:var(--panel);
+    border:1px solid #cfcabb;
+    border-radius:2px;
+    padding:22px 20px 24px;
+  }
+  .panel h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:22px;
+    line-height:1.15;
+    margin:0 0 2px;
+    letter-spacing:-.01em;
+  }
+  .panel .sub{
+    font-size:12.5px; color:var(--grafit);
+    margin:0 0 20px;
+  }
+  fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
+  legend{
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--grafit); font-weight:700; padding:0 0 7px;
+  }
+  label{display:block;font-size:13.5px;margin:0 0 8px}
+  select,input[type=number],input[type=text]{
+    width:100%; font-family:var(--sans); font-size:14px;
+    padding:7px 9px; border:1px solid #b9b3a3; border-radius:2px;
+    background:#fff; color:var(--ink);
+  }
+  select:focus,input:focus,button:focus-visible{
+    outline:2px solid var(--ink); outline-offset:1px;
+  }
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:0 0 8px}
+  .check input{margin:2px 0 0;accent-color:var(--ink)}
+
+  /* Bausteine: Kopfzeile mit Schalter, darunter die Detail-Einstellungen */
+  .baustein{
+    border-top:1px solid var(--linie);
+    padding-top:14px;
+  }
+  .baustein-kopf{
+    display:flex;gap:8px;align-items:center;margin:0 0 10px;
+    font-family:var(--display);font-weight:700;font-size:16px;cursor:pointer;
+  }
+  .baustein-kopf input{margin:0;accent-color:var(--ink);width:16px;height:16px}
+  .details{margin:0}
+  .details:disabled{opacity:.45}
+
+  .reihen{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+    margin:0 0 8px;
+  }
+  .reihen label{
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    margin:0;padding:5px 0;font-size:13.5px;font-weight:700;
+    background:#fff;border:1px solid #b9b3a3;border-radius:2px;cursor:pointer;
+  }
+  .reihen input{accent-color:var(--ink);margin:0}
+  .reihen label:has(input:checked){background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .buttons{display:flex;gap:8px;margin-top:20px}
+  button{
+    flex:1; font-family:var(--sans); font-size:14px; font-weight:700;
+    padding:10px 8px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--ink); background:#fff; color:var(--ink);
+  }
+  button.primary{background:var(--ink);color:var(--paper)}
+  button:hover{filter:brightness(.94)}
+  .hinweis{
+    margin-top:14px; font-size:12.5px; line-height:1.45;
+    color:var(--rot); display:none;
+  }
+  .hinweis.an{display:block}
+  .fuss{margin-top:18px;font-size:11.5px;line-height:1.5;color:var(--grafit)}
+
+  /* ---------- Blatt ---------- */
+  .blattstapel{display:flex;flex-direction:column;gap:24px}
+  .sheet{
+    background:var(--paper);
+    padding:18mm 16mm 20mm;
+    box-shadow:0 2px 14px rgba(20,30,50,.18);
+    border-radius:1px;
+  }
+  .kopf{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;border-bottom:2px solid var(--ink);padding-bottom:9px;margin-bottom:6px;
+  }
+  .kopf h2{
+    font-family:var(--display);font-weight:700;font-size:26px;
+    margin:0;letter-spacing:-.015em;
+  }
+  .kopf .meta{font-size:11.5px;color:var(--grafit);margin-top:4px}
+  .felder{display:flex;gap:16px;font-size:12px;color:var(--grafit);white-space:nowrap}
+  .felder span{display:inline-block}
+  .feldlinie{display:inline-block;width:34mm;border-bottom:1px solid var(--linie);margin-left:5px}
+  .feldlinie.kurz{width:22mm}
+
+  .block{margin-top:22px}
+  .block-titel{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--grafit);
+    display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  }
+  .block-titel::after{content:"";flex:1;height:1px;background:var(--linie)}
+
+  .gitter{display:grid;gap:9px 18px}
+  .aufgabe{
+    display:flex;align-items:center;gap:9px;
+    padding:5px 2px;border-bottom:1px dotted #ded8c9;
+  }
+  .nr{
+    font-size:11px;color:var(--grafit);min-width:17px;text-align:right;
+    padding-top:2px;
+  }
+  .term{font-size:19px;letter-spacing:.02em;white-space:nowrap}
+  .luecke{
+    display:inline-block;min-width:16mm;border-bottom:1.5px solid var(--ink);
+    vertical-align:baseline;margin:0 2px;
+  }
+  .kasten{
+    display:inline-block;width:20mm;height:9mm;vertical-align:-3mm;
+    border:1px solid var(--karo);
+    background-image:
+      repeating-linear-gradient(to right, var(--karo) 0 .4px, transparent .4px 4.5mm),
+      repeating-linear-gradient(to bottom, var(--karo) 0 .4px, transparent .4px 4.5mm);
+  }
+  .weg{
+    font-size:11.5px;color:var(--grafit);margin-left:auto;padding-left:12px;
+    white-space:nowrap;
+  }
+
+  /* Uhren */
+  .uhrgitter{display:grid;gap:10mm 8mm}
+  .uhr{
+    display:flex;flex-direction:column;align-items:center;gap:3mm;
+  }
+  .uhr svg{width:38mm;height:38mm;display:block}
+  .uhr .nr{font-size:11px;color:var(--grafit);align-self:flex-start;min-width:0;text-align:left}
+  .uhr .antwort{
+    font-size:16px;letter-spacing:.02em;
+    display:flex;align-items:baseline;gap:4px;
+  }
+  .schreiblinie{
+    display:inline-block;min-width:18mm;border-bottom:1.5px solid var(--ink);
+  }
+  .uhr .vorgabe{font-size:18px;font-weight:700}
+  .uhr .tageszeit{font-size:11px;color:var(--grafit);margin-top:-2mm}
+  .loesungen .uhr .antwort{color:var(--rot);font-weight:700}
+
+  .loesungen .kopf{border-bottom-color:var(--rot)}
+  .loesungen .gitter{gap:6px 18px}
+  .loesungen .aufgabe{border-bottom:0;padding:2px}
+  .loesungen .term{font-size:16px}
+  .loesungen .erg{color:var(--rot);font-weight:700}
+
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;padding:16px 12px 60px}
+    .panel{position:static;max-height:none;overflow:visible}
+    .sheet{padding:14mm 10mm}
+  }
+
+  @media print{
+    @page{size:A4 portrait;margin:14mm}
+    body{background:#fff}
+    .layout{display:block;max-width:none;padding:0}
+    .panel{display:none}
+    .blattstapel{gap:0}
+    .sheet{box-shadow:none;padding:0;background:#fff}
+    .sheet+.sheet{break-before:page}
+    .aufgabe,.uhr{break-inside:avoid}
+    .block-titel{break-after:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <form class="panel" id="panel" onsubmit="return false">
+    <h1>Mathe-Mix-Generator</h1>
+    <p class="sub">Bausteine aus allen Mathe-Generatoren auf einem Blatt kombinieren.</p>
+
+    <fieldset>
+      <legend>Blatt</legend>
+      <label>Überschrift
+        <input type="text" id="titel" value="Mathe-Mix">
+      </label>
+      <div class="check"><input type="checkbox" id="luecken"><label for="luecken" style="margin:0">Platzhalter mischen (47 + __ = 55)</label></div>
+      <div class="check"><input type="checkbox" id="karo" checked><label for="karo" style="margin:0">Karokästchen zum Eintragen</label></div>
+      <div class="check"><input type="checkbox" id="loesung" checked><label for="loesung" style="margin:0">Lösungsblatt anhängen</label></div>
+      <label>Blattnummer
+        <input type="number" id="seed" value="1" min="1" step="1">
+      </label>
+    </fieldset>
+
+    <!-- ---------- Baustein: Plus & Minus ---------- -->
+    <fieldset class="baustein">
+      <label class="baustein-kopf"><input type="checkbox" id="pm-an" checked> Plus &amp; Minus</label>
+      <fieldset class="details" id="pm-details">
+        <label>Rechenarten
+          <select id="pm-arten">
+            <option value="beide" selected>Addition und Subtraktion</option>
+            <option value="add">nur Addition</option>
+            <option value="sub">nur Subtraktion</option>
+          </select>
+        </label>
+        <div class="row">
+          <label>Zahlenraum bis
+            <select id="pm-max">
+              <option value="20">20</option>
+              <option value="100" selected>100</option>
+              <option value="1000">1000</option>
+            </select>
+          </label>
+          <label>Je Rechenart
+            <input type="number" id="pm-anzahl" value="6" min="2" max="40" step="1">
+          </label>
+        </div>
+        <div class="row">
+          <label>Zehnerübergang
+            <select id="pm-uebergang">
+              <option value="force">immer</option>
+              <option value="any" selected>gemischt</option>
+              <option value="avoid">nie</option>
+            </select>
+          </label>
+          <label>Zweite Zahl
+            <select id="pm-zweite">
+              <option value="mix" selected>gemischt</option>
+              <option value="one">einstellig</option>
+              <option value="two">zweistellig</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Spalten
+            <select id="pm-spalten">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+            </select>
+          </label>
+          <div class="check" style="align-self:center"><input type="checkbox" id="pm-weg"><label for="pm-weg" style="margin:0">Rechenweg</label></div>
+        </div>
+      </fieldset>
+    </fieldset>
+
+    <!-- ---------- Baustein: Einmaleins ---------- -->
+    <fieldset class="baustein">
+      <label class="baustein-kopf"><input type="checkbox" id="em-an" checked> Einmaleins</label>
+      <fieldset class="details" id="em-details">
+        <div class="row">
+          <label>Rechenarten
+            <select id="em-arten">
+              <option value="mult">nur Mal</option>
+              <option value="div">nur Geteilt</option>
+              <option value="beide" selected>Mal und Geteilt</option>
+            </select>
+          </label>
+          <label>Je Rechenart
+            <input type="number" id="em-anzahl" value="6" min="2" max="60" step="1">
+          </label>
+        </div>
+        <div class="reihen" id="reihenwahl" aria-label="Reihen"></div>
+        <label>Spalten
+          <select id="em-spalten">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+      </fieldset>
+    </fieldset>
+
+    <!-- ---------- Baustein: Uhrzeit ---------- -->
+    <fieldset class="baustein">
+      <label class="baustein-kopf"><input type="checkbox" id="uz-an" checked> Uhrzeit</label>
+      <fieldset class="details" id="uz-details">
+        <label>Aufgabenart
+          <select id="uz-art">
+            <option value="ablesen">Uhr ablesen</option>
+            <option value="einzeichnen">Zeiger einzeichnen</option>
+            <option value="gemischt" selected>gemischt</option>
+          </select>
+        </label>
+        <div class="row">
+          <label>Genauigkeit
+            <select id="uz-genau">
+              <option value="stunde">volle Stunden</option>
+              <option value="halb">halbe Stunden</option>
+              <option value="viertel" selected>Viertelstunden</option>
+              <option value="fuenf">5 Minuten</option>
+              <option value="minute">minutengenau</option>
+            </select>
+          </label>
+          <label>Tageszeit
+            <select id="uz-tageszeit">
+              <option value="vormittag" selected>vormittags</option>
+              <option value="nachmittag">nachmittags</option>
+              <option value="gemischt">gemischt</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Anzahl Uhren
+            <input type="number" id="uz-anzahl" value="4" min="1" max="24" step="1">
+          </label>
+          <label>Spalten
+            <select id="uz-spalten">
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+    </fieldset>
+
+    <div class="buttons">
+      <button type="button" id="neu">Neu würfeln</button>
+      <button type="button" class="primary" id="drucken">Drucken / PDF</button>
+    </div>
+
+    <p class="hinweis" id="hinweis"></p>
+    <p class="fuss">Gleiche Blattnummer und gleiche Einstellungen ergeben immer dasselbe Blatt. Im Druckdialog als Ziel „Als PDF speichern“ wählen.</p>
+  </form>
+
+  <div class="blattstapel" id="stapel"></div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   Aufgabenlogik ist aus rechenblatt.html, einmaleins.html und
+   uhrzeit.html übernommen. Änderungen dort bei Bedarf hier nachziehen.
+------------------------------------------------------------------- */
+
+/* ---------- Zufall mit Startwert, damit Blätter reproduzierbar sind ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const ganz = (rng, min, max) => min + Math.floor(rng() * (max - min + 1));
+const wahl = (rng, liste) => liste[Math.floor(rng() * liste.length)];
+
+/* Einfacher Zahlen-Hash über Einstellungen, damit jeder Baustein
+   seinen eigenen, stabilen Zufallsstrom bekommt. */
+function hash(text){
+  let h = 7;
+  for (const c of String(text)) h = Math.imul(h, 31) + c.charCodeAt(0) | 0;
+  return h;
+}
+
+/* Genau die Hälfte der Aufgaben bekommt einen Platzhalter, zufällig verteilt. */
+function verteilePlatzhalter(rng, liste){
+  const plaetze = liste.map((_, i) => i);
+  for (let i = plaetze.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [plaetze[i], plaetze[j]] = [plaetze[j], plaetze[i]];
+  }
+  const anzahl = Math.round(liste.length / 2);
+  for (let i = 0; i < anzahl; i++){
+    liste[plaetze[i]].form = rng() < 0.5 ? 'mitte' : 'links';
+  }
+}
+
+/* ---------- Plus & Minus (aus rechenblatt.html) ---------- */
+function zweiteZahl(rng, art, obergrenze){
+  if (obergrenze < 1) return null;
+  if (art === 'one')  return ganz(rng, 1, Math.min(9, obergrenze));
+  if (art === 'two')  return obergrenze < 10 ? null : ganz(rng, 10, Math.min(99, obergrenze));
+  return ganz(rng, 1, Math.min(99, obergrenze));
+}
+
+function baueAddition(rng, max, art, uebergang){
+  for (let i = 0; i < 3000; i++){
+    const b = zweiteZahl(rng, art, max - 1);
+    if (!b) continue;
+    const a = ganz(rng, 1, max - b);
+    const kreuzt = (a % 10) + (b % 10) >= 10;
+    if (uebergang === 'force' && !kreuzt) continue;
+    if (uebergang === 'avoid' && kreuzt) continue;
+    return {op:'+', a, b, r:a + b, kreuzt};
+  }
+  return null;
+}
+
+function baueSubtraktion(rng, max, art, uebergang){
+  for (let i = 0; i < 3000; i++){
+    const a = ganz(rng, 2, max);
+    const b = zweiteZahl(rng, art, a - 1);
+    if (!b) continue;
+    const kreuzt = (a % 10) < (b % 10);
+    if (uebergang === 'force' && !kreuzt) continue;
+    if (uebergang === 'avoid' && kreuzt) continue;
+    return {op:'−', a, b, r:a - b, kreuzt};
+  }
+  return null;
+}
+
+function seriePlusMinus(rng, bauer, pm, luecken){
+  const raus = [], gesehen = new Set();
+  let fehlversuche = 0;
+  while (raus.length < pm.anzahl && fehlversuche < 400){
+    const auf = bauer(rng, pm.max, pm.zweite, pm.uebergang);
+    if (!auf){ fehlversuche += 50; continue; }
+    const key = auf.a + auf.op + auf.b;
+    if (gesehen.has(key)){ fehlversuche++; continue; }
+    gesehen.add(key);
+    auf.form = 'ergebnis';
+    raus.push(auf);
+  }
+  if (luecken) verteilePlatzhalter(rng, raus);
+  return raus;
+}
+
+/* Rechenweg: 47 + 8 → 47 + 3 + 5 */
+function rechenweg(auf){
+  if (!auf.kreuzt) return '';
+  if (auf.op === '+'){
+    const bis = 10 - (auf.a % 10);
+    return `${auf.a} + ${bis} + ${auf.b - bis}`;
+  }
+  const bis = auf.a % 10;
+  return `${auf.a} − ${bis} − ${auf.b - bis}`;
+}
+
+/* ---------- Einmaleins (aus einmaleins.html) ---------- */
+function baueMultiplikation(rng, reihen){
+  const b = wahl(rng, reihen);        /* geübte Reihe */
+  const a = ganz(rng, 1, 10);
+  return { op:'·', a, b, r:a * b };
+}
+
+/* Division als Umkehraufgabe: r : b = a, der Teiler kommt aus der Reihe */
+function baueDivision(rng, reihen){
+  const b = wahl(rng, reihen);
+  const a = ganz(rng, 1, 10);
+  return { op:':', a:a * b, b, r:a };
+}
+
+function serieEinmaleins(rng, bauer, anzahl, reihen, luecken){
+  const raus = [], gesehen = new Set();
+  const maxVerschieden = reihen.length * 10;
+  let fehlversuche = 0;
+  while (raus.length < Math.min(anzahl, maxVerschieden) && fehlversuche < 1200){
+    const auf = bauer(rng, reihen);
+    const key = auf.a + auf.op + auf.b;
+    if (gesehen.has(key)){ fehlversuche++; continue; }
+    gesehen.add(key);
+    auf.form = 'ergebnis';
+    raus.push(auf);
+  }
+  if (luecken) verteilePlatzhalter(rng, raus);
+  return raus;
+}
+
+/* ---------- Uhrzeit (aus uhrzeit.html) ---------- */
+const MINUTEN = {
+  stunde:  [0],
+  halb:    [0, 30],
+  viertel: [0, 15, 30, 45],
+  fuenf:   [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+  minute:  Array.from({length:60}, (_, i) => i)
+};
+
+function baueZeiten(rng, uz){
+  const raus = [], gesehen = new Set();
+  const minuten = MINUTEN[uz.genau];
+  const maxVerschieden = minuten.length * 12;
+  let fehlversuche = 0;
+  while (raus.length < Math.min(uz.anzahl, maxVerschieden) && fehlversuche < 2000){
+    let h;
+    if (uz.tageszeit === 'nachmittag')      h = ganz(rng, 13, 23);
+    else if (uz.tageszeit === 'gemischt')   h = rng() < 0.5 ? ganz(rng, 1, 12) : ganz(rng, 13, 23);
+    else                                    h = ganz(rng, 1, 12);
+    const m = wahl(rng, minuten);
+    const key = (h % 12) + ':' + m;         /* gleiche Zeigerstellung nur einmal */
+    if (gesehen.has(key)){ fehlversuche++; continue; }
+    gesehen.add(key);
+    const typ = uz.art === 'gemischt' ? (rng() < 0.5 ? 'ablesen' : 'einzeichnen') : uz.art;
+    raus.push({ h, m, typ });
+  }
+  return raus;
+}
+
+const digital = z => `${z.h}:${String(z.m).padStart(2, '0')}`;
+
+function uhrSvg(z, mitZeigern, rot){
+  const teile = [];
+  teile.push('<circle cx="50" cy="50" r="46" fill="#fff" stroke="var(--ink)" stroke-width="2"/>');
+
+  for (let i = 0; i < 60; i++){
+    const winkel = i * 6 * Math.PI / 180;
+    const gross = i % 5 === 0;
+    const r1 = gross ? 40.5 : 43;
+    const x1 = 50 + r1 * Math.sin(winkel), y1 = 50 - r1 * Math.cos(winkel);
+    const x2 = 50 + 45 * Math.sin(winkel), y2 = 50 - 45 * Math.cos(winkel);
+    teile.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--ink)" stroke-width="${gross ? 1.6 : 0.6}"/>`);
+  }
+
+  for (let i = 1; i <= 12; i++){
+    const winkel = i * 30 * Math.PI / 180;
+    const x = 50 + 33 * Math.sin(winkel), y = 50 - 33 * Math.cos(winkel);
+    teile.push(`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dy="0.36em" font-size="9.5" font-weight="700" font-family="var(--sans)" fill="var(--ink)">${i}</text>`);
+  }
+
+  if (mitZeigern){
+    const farbe = rot ? 'var(--rot)' : 'var(--ink)';
+    const stunde = ((z.h % 12) + z.m / 60) * 30;
+    const minute = z.m * 6;
+    teile.push(`<line x1="50" y1="50" x2="50" y2="29" stroke="${farbe}" stroke-width="4" stroke-linecap="round" transform="rotate(${stunde.toFixed(1)} 50 50)"/>`);
+    teile.push(`<line x1="50" y1="50" x2="50" y2="14" stroke="${farbe}" stroke-width="2.4" stroke-linecap="round" transform="rotate(${minute} 50 50)"/>`);
+    teile.push(`<circle cx="50" cy="50" r="2.6" fill="${farbe}"/>`);
+  }
+
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="Ziffernblatt">${teile.join('')}</svg>`;
+}
+
+/* Im gemischten Modus braucht jede Ablese-Uhr einen Hinweis, sonst ist
+   nicht entscheidbar, ob z. B. 3:40 oder 15:40 gemeint ist. */
+function uhrAufgabeHtml(z, nr, tageszeitModus){
+  if (z.typ === 'ablesen'){
+    let tageszeit = '';
+    if (tageszeitModus === 'gemischt'){
+      tageszeit = `<span class="tageszeit">${z.h > 12 ? 'nachmittags' : 'vormittags'}</span>`;
+    } else if (z.h > 12){
+      tageszeit = '<span class="tageszeit">nachmittags</span>';
+    }
+    return `<div class="uhr">
+      <span class="nr">${nr}.</span>
+      ${uhrSvg(z, true, false)}
+      ${tageszeit}
+      <span class="antwort"><span class="schreiblinie"></span> Uhr</span>
+    </div>`;
+  }
+  return `<div class="uhr">
+    <span class="nr">${nr}.</span>
+    ${uhrSvg(z, false, false)}
+    <span class="vorgabe">${digital(z)} Uhr</span>
+  </div>`;
+}
+
+function uhrLoesungHtml(z, nr){
+  return `<div class="uhr">
+    <span class="nr">${nr}.</span>
+    ${uhrSvg(z, true, z.typ === 'einzeichnen')}
+    <span class="antwort">${digital(z)} Uhr</span>
+  </div>`;
+}
+
+const GENAU_NAMEN = {
+  stunde:'volle Stunden', halb:'halbe Stunden', viertel:'Viertelstunden',
+  fuenf:'5-Minuten-Schritte', minute:'minutengenau'
+};
+
+/* ---------- Darstellung der Rechenaufgaben ---------- */
+function termHtml(auf, karo){
+  const feld = karo ? '<span class="kasten"></span>' : '<span class="luecke"></span>';
+  const lue  = '<span class="luecke"></span>';
+  if (auf.form === 'mitte') return `${auf.a} ${auf.op} ${lue} = ${auf.r}`;
+  if (auf.form === 'links') return `${lue} ${auf.op} ${auf.b} = ${auf.r}`;
+  return `${auf.a} ${auf.op} ${auf.b} = ${feld}`;
+}
+
+function loesungHtml(auf){
+  return `${auf.a} ${auf.op} ${auf.b} = <span class="erg">${auf.r}</span>`;
+}
+
+function blockHtml(titel, liste, spalten, opt, startNr, mitWeg){
+  if (!liste.length) return '';
+  const zeilen = liste.map((auf, i) => {
+    const weg = mitWeg ? rechenweg(auf) : '';
+    return `<div class="aufgabe">
+      <span class="nr">${startNr + i}.</span>
+      <span class="term">${termHtml(auf, opt.karo)}</span>
+      ${weg ? `<span class="weg">${weg}</span>` : ''}
+    </div>`;
+  }).join('');
+  return `<section class="block">
+    <h3 class="block-titel">${titel}</h3>
+    <div class="gitter" style="grid-template-columns:repeat(${spalten},minmax(0,1fr))">${zeilen}</div>
+  </section>`;
+}
+
+function loesungsBlockHtml(titel, liste, startNr){
+  if (!liste.length) return '';
+  const zeilen = liste.map((auf, i) =>
+    `<div class="aufgabe"><span class="nr">${startNr + i}.</span><span class="term">${loesungHtml(auf)}</span></div>`
+  ).join('');
+  return `<section class="block">
+    <h3 class="block-titel">${titel}</h3>
+    <div class="gitter" style="grid-template-columns:repeat(3,minmax(0,1fr))">${zeilen}</div>
+  </section>`;
+}
+
+function uhrBlockHtml(titel, zeiten, spalten, startNr, zelle){
+  if (!zeiten.length) return '';
+  return `<section class="block">
+    <h3 class="block-titel">${titel}</h3>
+    <div class="uhrgitter" style="grid-template-columns:repeat(${spalten},minmax(0,1fr))">
+      ${zeiten.map((z, i) => zelle(z, startNr + i)).join('')}
+    </div>
+  </section>`;
+}
+
+/* ---------- Einstellungen ---------- */
+const $ = id => document.getElementById(id);
+const zahl = (id, min, max, standard) => Math.max(min, Math.min(max, parseInt($(id).value, 10) || standard));
+
+function baueReihenwahl(){
+  $('reihenwahl').innerHTML = Array.from({length:10}, (_, i) => {
+    const n = i + 1;
+    return `<label><input type="checkbox" class="reihe" value="${n}" checked>${n}</label>`;
+  }).join('');
+}
+
+function einstellungen(){
+  return {
+    titel: $('titel').value.trim() || 'Mathe-Mix',
+    luecken: $('luecken').checked,
+    karo: $('karo').checked,
+    loesung: $('loesung').checked,
+    seed: Math.max(1, parseInt($('seed').value, 10) || 1),
+    pm: {
+      an: $('pm-an').checked,
+      arten: $('pm-arten').value,
+      max: parseInt($('pm-max').value, 10),
+      anzahl: zahl('pm-anzahl', 2, 40, 6),
+      uebergang: $('pm-uebergang').value,
+      zweite: $('pm-zweite').value,
+      spalten: parseInt($('pm-spalten').value, 10),
+      weg: $('pm-weg').checked
+    },
+    em: {
+      an: $('em-an').checked,
+      arten: $('em-arten').value,
+      anzahl: zahl('em-anzahl', 2, 60, 6),
+      reihen: [...document.querySelectorAll('.reihe:checked')].map(x => parseInt(x.value, 10)),
+      spalten: parseInt($('em-spalten').value, 10)
+    },
+    uz: {
+      an: $('uz-an').checked,
+      art: $('uz-art').value,
+      genau: $('uz-genau').value,
+      tageszeit: $('uz-tageszeit').value,
+      anzahl: zahl('uz-anzahl', 1, 24, 4),
+      spalten: parseInt($('uz-spalten').value, 10)
+    }
+  };
+}
+
+/* Jeder Baustein würfelt mit eigenem Zufallsstrom. Wer einen Baustein
+   an- oder abschaltet, verändert die Aufgaben der anderen nicht. */
+function rngFuer(seed, salz, teilOpt){
+  return mulberry32(seed * 2654435761 + salz + hash(JSON.stringify(teilOpt)));
+}
+
+function untertitel(opt){
+  const teile = [];
+  if (opt.pm.an) teile.push(`Plus & Minus bis ${opt.pm.max}`);
+  if (opt.em.an && opt.em.reihen.length){
+    teile.push(opt.em.reihen.length === 10 ? 'Einmaleins alle Reihen' : 'Einmaleins ' + opt.em.reihen.join('er-, ') + 'er-Reihe');
+  }
+  if (opt.uz.an) teile.push(`Uhrzeit ${GENAU_NAMEN[opt.uz.genau]}`);
+  teile.push(`Blatt ${opt.seed}`);
+  return teile.join(' · ');
+}
+
+function uhrAnleitung(art){
+  if (art === 'ablesen') return 'Uhrzeit: Schreibe die Zeit auf';
+  if (art === 'einzeichnen') return 'Uhrzeit: Zeichne die Zeiger ein';
+  return 'Uhrzeit: Zeiger einzeichnen oder Zeit aufschreiben';
+}
+
+/* ---------- Zusammenbauen ---------- */
+function zeichne(){
+  const opt = einstellungen();
+  $('pm-details').disabled = !opt.pm.an;
+  $('em-details').disabled = !opt.em.an;
+  $('uz-details').disabled = !opt.uz.an;
+
+  const meldungen = [];
+  let add = [], sub = [], mult = [], div = [], zeiten = [];
+
+  if (opt.pm.an){
+    const rng = rngFuer(opt.seed, 101, [opt.pm.arten, opt.pm.max, opt.pm.anzahl, opt.pm.uebergang, opt.pm.zweite, opt.luecken]);
+    if (opt.pm.arten !== 'sub') add = seriePlusMinus(rng, baueAddition, opt.pm, opt.luecken);
+    if (opt.pm.arten !== 'add') sub = seriePlusMinus(rng, baueSubtraktion, opt.pm, opt.luecken);
+    if ((opt.pm.arten !== 'sub' && add.length < opt.pm.anzahl) || (opt.pm.arten !== 'add' && sub.length < opt.pm.anzahl)){
+      meldungen.push('Plus & Minus: Zu wenige verschiedene Aufgaben. Zahlenraum vergrößern oder Anzahl verringern.');
+    }
+  }
+
+  if (opt.em.an){
+    if (!opt.em.reihen.length){
+      meldungen.push('Einmaleins: Mindestens eine Reihe auswählen.');
+    } else {
+      const rng = rngFuer(opt.seed, 202, [opt.em.arten, opt.em.anzahl, opt.em.reihen, opt.luecken]);
+      if (opt.em.arten !== 'div')  mult = serieEinmaleins(rng, baueMultiplikation, opt.em.anzahl, opt.em.reihen, opt.luecken);
+      if (opt.em.arten !== 'mult') div  = serieEinmaleins(rng, baueDivision, opt.em.anzahl, opt.em.reihen, opt.luecken);
+      if ((opt.em.arten !== 'div' && mult.length < opt.em.anzahl) || (opt.em.arten !== 'mult' && div.length < opt.em.anzahl)){
+        meldungen.push('Einmaleins: Zu wenige verschiedene Aufgaben. Mehr Reihen auswählen oder Anzahl verringern.');
+      }
+    }
+  }
+
+  if (opt.uz.an){
+    const rng = rngFuer(opt.seed, 303, [opt.uz.art, opt.uz.genau, opt.uz.tageszeit, opt.uz.anzahl]);
+    zeiten = baueZeiten(rng, opt.uz);
+    if (zeiten.length < opt.uz.anzahl){
+      meldungen.push(`Uhrzeit: Bei dieser Genauigkeit gibt es nur ${zeiten.length} verschiedene Zeigerstellungen.`);
+    }
+  }
+
+  if (!opt.pm.an && !opt.em.an && !opt.uz.an){
+    meldungen.push('Mindestens einen Baustein auswählen.');
+  }
+
+  const hinweis = $('hinweis');
+  hinweis.classList.toggle('an', meldungen.length > 0);
+  hinweis.innerHTML = meldungen.join('<br>');
+
+  if (!add.length && !sub.length && !mult.length && !div.length && !zeiten.length){
+    $('stapel').innerHTML = '';
+    return;
+  }
+
+  /* Nummern laufen über alle Blöcke weiter */
+  const bloecke = [];
+  let nr = 1;
+  const rechnen = [
+    ['Addition', add, opt.pm.spalten, opt.pm.weg],
+    ['Subtraktion', sub, opt.pm.spalten, opt.pm.weg],
+    ['Multiplikation', mult, opt.em.spalten, false],
+    ['Division', div, opt.em.spalten, false]
+  ];
+  for (const [titel, liste, spalten, weg] of rechnen){
+    if (!liste.length) continue;
+    bloecke.push({ titel, liste, spalten, weg, start: nr });
+    nr += liste.length;
+  }
+  const uhrStart = nr;
+
+  let html = `<article class="sheet">
+      <header class="kopf">
+        <div>
+          <h2>${opt.titel}</h2>
+          <div class="meta">${untertitel(opt)}</div>
+        </div>
+        <div class="felder">
+          <span>Name<span class="feldlinie"></span></span>
+          <span>Datum<span class="feldlinie kurz"></span></span>
+        </div>
+      </header>
+      ${bloecke.map(b => blockHtml(b.titel, b.liste, b.spalten, opt, b.start, b.weg)).join('')}
+      ${uhrBlockHtml(uhrAnleitung(opt.uz.art), zeiten, opt.uz.spalten, uhrStart,
+          (z, n) => uhrAufgabeHtml(z, n, opt.uz.tageszeit))}
+    </article>`;
+
+  if (opt.loesung){
+    html += `<article class="sheet loesungen">
+        <header class="kopf">
+          <div>
+            <h2>Lösungen</h2>
+            <div class="meta">zu „${opt.titel}“ · Blatt ${opt.seed}</div>
+          </div>
+        </header>
+        ${bloecke.map(b => loesungsBlockHtml(b.titel, b.liste, b.start)).join('')}
+        ${uhrBlockHtml('Uhrzeit: eingezeichnete Zeiger in Rot', zeiten, opt.uz.spalten, uhrStart, uhrLoesungHtml)}
+      </article>`;
+  }
+
+  $('stapel').innerHTML = html;
+}
+
+$('panel').addEventListener('input', zeichne);
+$('panel').addEventListener('change', zeichne);
+$('neu').addEventListener('click', () => {
+  $('seed').value = Math.floor(Math.random() * 9000) + 1000;
+  zeichne();
+});
+$('drucken').addEventListener('click', () => window.print());
+
+baueReihenwahl();
+zeichne();
+</script>
+</body>
+</html>

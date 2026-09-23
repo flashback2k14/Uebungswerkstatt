@@ -37,6 +37,13 @@ const GENERATOREN = [
     datei: 'generatoren/uhrzeit.html'
   },
   {
+    id: 'mathe-mix',
+    titel: 'Mathe-Mix',
+    fach: 'Mathe',
+    beschreibung: 'Plus und Minus, Einmaleins und Uhrzeit frei kombiniert auf einem Blatt. Jeder Baustein mit eigenen Einstellungen, dazu ein gemeinsames Lösungsblatt.',
+    datei: 'generatoren/mathe-mix.html'
+  },
+  {
     id: 'diktat',
     titel: 'Diktat',
     fach: 'Deutsch',

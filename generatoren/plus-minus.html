@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rechenblatt-Generator</title>
+<title>Plus-Minus-Generator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
@@ -177,13 +177,13 @@
 <div class="layout">
 
   <form class="panel" id="panel" onsubmit="return false">
-    <h1>Rechenblatt-Generator</h1>
+    <h1>Plus-Minus-Generator</h1>
     <p class="sub">Aufgaben würfeln, drucken oder als PDF sichern.</p>
 
     <fieldset>
       <legend>Inhalt</legend>
       <label>Überschrift
-        <input type="text" id="titel" value="Rechenblatt">
+        <input type="text" id="titel" value="Plus Minus">
       </label>
       <label>Rechenarten
         <select id="arten">
@@ -394,7 +394,7 @@ const $ = id => document.getElementById(id);
 
 function einstellungen(){
   return {
-    titel: $('titel').value.trim() || 'Rechenblatt',
+    titel: $('titel').value.trim() || 'Plus Minus',
     arten: $('arten').value,
     anzahl: Math.max(4, Math.min(40, parseInt($('anzahl').value, 10) || 10)),
     max: parseInt($('max').value, 10),

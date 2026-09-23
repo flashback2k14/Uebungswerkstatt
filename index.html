@@ -228,6 +228,8 @@ function zeige(id){
 
 function route(){
   const id = location.hash.replace(/^#\/?/, '');
+  /* alte Lesezeichen auf den umbenannten Generator umleiten */
+  if (id === 'rechenblatt'){ location.replace('#/plus-minus'); return; }
   zeige(id);
 }
 

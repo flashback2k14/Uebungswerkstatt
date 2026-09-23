@@ -254,132 +254,8 @@
   <div class="blattstapel" id="stapel"></div>
 </div>
 
+<script src="mathe-logic.js"></script>
 <script>
-/* ---------- Zufall mit Startwert, damit Blätter reproduzierbar sind ---------- */
-function mulberry32(a){
-  return function(){
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-const ganz = (rng, min, max) => min + Math.floor(rng() * (max - min + 1));
-
-/* ---------- Aufgaben bauen ---------- */
-function zweiteZahl(rng, art, obergrenze){
-  if (obergrenze < 1) return null;
-  if (art === 'one')  return obergrenze < 1 ? null : ganz(rng, 1, Math.min(9, obergrenze));
-  if (art === 'two')  return obergrenze < 10 ? null : ganz(rng, 10, Math.min(99, obergrenze));
-  return ganz(rng, 1, Math.min(99, obergrenze));
-}
-
-function baueAddition(rng, max, art, uebergang){
-  for (let i = 0; i < 3000; i++){
-    const b = zweiteZahl(rng, art, max - 1);
-    if (!b) continue;
-    const a = ganz(rng, 1, max - b);
-    const kreuzt = (a % 10) + (b % 10) >= 10;
-    if (uebergang === 'force' && !kreuzt) continue;
-    if (uebergang === 'avoid' && kreuzt) continue;
-    return {op:'+', a, b, r:a + b, kreuzt};
-  }
-  return null;
-}
-
-function baueSubtraktion(rng, max, art, uebergang){
-  for (let i = 0; i < 3000; i++){
-    const a = ganz(rng, 2, max);
-    const b = zweiteZahl(rng, art, a - 1);
-    if (!b) continue;
-    const kreuzt = (a % 10) < (b % 10);
-    if (uebergang === 'force' && !kreuzt) continue;
-    if (uebergang === 'avoid' && kreuzt) continue;
-    return {op:'−', a, b, r:a - b, kreuzt};
-  }
-  return null;
-}
-
-function serie(rng, bauer, anzahl, max, art, uebergang, luecken){
-  const raus = [], gesehen = new Set();
-  let fehlversuche = 0;
-  while (raus.length < anzahl && fehlversuche < 400){
-    const auf = bauer(rng, max, art, uebergang);
-    if (!auf){ fehlversuche += 50; continue; }
-    const key = auf.a + auf.op + auf.b;
-    if (gesehen.has(key)){ fehlversuche++; continue; }
-    gesehen.add(key);
-    auf.form = 'ergebnis';
-    raus.push(auf);
-  }
-  if (luecken) verteilePlatzhalter(rng, raus);
-  return raus;
-}
-
-/* Genau die Hälfte der Aufgaben bekommt einen Platzhalter, zufällig verteilt. */
-function verteilePlatzhalter(rng, liste){
-  const plaetze = liste.map((_, i) => i);
-  for (let i = plaetze.length - 1; i > 0; i--){
-    const j = Math.floor(rng() * (i + 1));
-    [plaetze[i], plaetze[j]] = [plaetze[j], plaetze[i]];
-  }
-  const anzahl = Math.round(liste.length / 2);
-  for (let i = 0; i < anzahl; i++){
-    liste[plaetze[i]].form = rng() < 0.5 ? 'mitte' : 'links';
-  }
-}
-
-/* ---------- Rechenweg: 47 + 8 → 47 + 3 + 5 ---------- */
-function rechenweg(auf){
-  if (!auf.kreuzt) return '';
-  if (auf.op === '+'){
-    const bis = 10 - (auf.a % 10);
-    return `${auf.a} + ${bis} + ${auf.b - bis}`;
-  }
-  const bis = auf.a % 10;
-  return `${auf.a} − ${bis} − ${auf.b - bis}`;
-}
-
-/* ---------- Darstellung ---------- */
-function termHtml(auf, karo){
-  const feld = karo ? '<span class="kasten"></span>' : '<span class="luecke"></span>';
-  const lue  = '<span class="luecke"></span>';
-  if (auf.form === 'mitte') return `${auf.a} ${auf.op} ${lue} = ${auf.r}`;
-  if (auf.form === 'links') return `${lue} ${auf.op} ${auf.b} = ${auf.r}`;
-  return `${auf.a} ${auf.op} ${auf.b} = ${feld}`;
-}
-
-function loesungHtml(auf){
-  return `${auf.a} ${auf.op} ${auf.b} = <span class="erg">${auf.r}</span>`;
-}
-
-function blockHtml(titel, liste, opt, startNr){
-  if (!liste.length) return '';
-  const zeilen = liste.map((auf, i) => {
-    const weg = opt.weg ? rechenweg(auf) : '';
-    return `<div class="aufgabe">
-      <span class="nr">${startNr + i}.</span>
-      <span class="term">${termHtml(auf, opt.karo)}</span>
-      ${weg ? `<span class="weg">${weg}</span>` : ''}
-    </div>`;
-  }).join('');
-  return `<section class="block">
-    <h3 class="block-titel">${titel}</h3>
-    <div class="gitter" style="grid-template-columns:repeat(${opt.spalten},minmax(0,1fr))">${zeilen}</div>
-  </section>`;
-}
-
-function loesungsBlockHtml(titel, liste, startNr){
-  if (!liste.length) return '';
-  const zeilen = liste.map((auf, i) =>
-    `<div class="aufgabe"><span class="nr">${startNr + i}.</span><span class="term">${loesungHtml(auf)}</span></div>`
-  ).join('');
-  return `<section class="block">
-    <h3 class="block-titel">${titel}</h3>
-    <div class="gitter" style="grid-template-columns:repeat(3,minmax(0,1fr))">${zeilen}</div>
-  </section>`;
-}
-
 function untertitel(opt){
   const teile = [`Zahlenraum bis ${opt.max}`];
   if (opt.uebergang === 'force') teile.push('mit Zehnerübergang');
@@ -413,8 +289,8 @@ function zeichne(){
   const opt = einstellungen();
   const rng = mulberry32(opt.seed * 2654435761 + opt.max * 97 + opt.anzahl * 13);
 
-  const add = opt.arten === 'sub' ? [] : serie(rng, baueAddition, opt.anzahl, opt.max, opt.zweite, opt.uebergang, opt.luecken);
-  const sub = opt.arten === 'add' ? [] : serie(rng, baueSubtraktion, opt.anzahl, opt.max, opt.zweite, opt.uebergang, opt.luecken);
+  const add = opt.arten === 'sub' ? [] : seriePlusMinus(rng, baueAddition, opt, opt.luecken);
+  const sub = opt.arten === 'add' ? [] : seriePlusMinus(rng, baueSubtraktion, opt, opt.luecken);
 
   const fehlend = (opt.arten !== 'sub' && add.length < opt.anzahl) || (opt.arten !== 'add' && sub.length < opt.anzahl);
   const hinweis = $('hinweis');
@@ -436,8 +312,8 @@ function zeichne(){
 
   let html = `<article class="sheet">
       ${kopf}
-      ${blockHtml('Addition', add, opt, 1)}
-      ${blockHtml('Subtraktion', sub, opt, 1)}
+      ${blockHtml('Addition', add, opt.spalten, opt.karo, 1, opt.weg)}
+      ${blockHtml('Subtraktion', sub, opt.spalten, opt.karo, 1, opt.weg)}
     </article>`;
 
   if (opt.loesung && (add.length || sub.length)){

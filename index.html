@@ -81,6 +81,19 @@
     font-size:15px;color:var(--grafit);margin:0 0 36px;max-width:56ch;line-height:1.55;
   }
 
+  /* Eine Gruppe je Fach */
+  .fachgruppe + .fachgruppe{margin-top:40px}
+  .fachtitel{
+    display:flex;align-items:baseline;gap:10px;
+    font-family:var(--display);font-weight:700;font-size:22px;
+    letter-spacing:-.01em;margin:0 0 16px;padding-bottom:8px;
+    border-bottom:1px solid var(--linie);
+  }
+  .fachtitel .anzahl{
+    font-family:var(--sans);font-size:12px;font-weight:700;
+    letter-spacing:.08em;color:var(--grafit);
+  }
+
   .kartenraster{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
@@ -109,24 +122,12 @@
   .mini i.rot{background:var(--rot);width:40%}
 
   .karte .text{min-width:0}
-  .karte .fach{
-    font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
-    font-weight:700;color:var(--grafit);
-  }
-  .karte h2{
+  .karte h3{
     font-family:var(--display);font-weight:700;font-size:20px;
     margin:2px 0 6px;letter-spacing:-.01em;
   }
   .karte p{margin:0;font-size:13px;line-height:1.5;color:var(--grafit)}
 
-  .start .fuss{
-    margin-top:44px;font-size:12.5px;line-height:1.6;color:var(--grafit);
-    border-top:1px solid var(--linie);padding-top:16px;max-width:64ch;
-  }
-  .start .fuss code{
-    font-family:ui-monospace, "SF Mono", Consolas, monospace;
-    font-size:11.5px;background:var(--panel);padding:1px 5px;border-radius:2px;
-  }
 
   @media (max-width:640px){
     .kopfleiste{padding:12px 14px 10px}
@@ -157,8 +158,7 @@
         Jeder Generator baut ein fertiges Arbeitsblatt: Einstellungen wählen,
         Vorschau prüfen, dann über den Knopf im Generator drucken oder als PDF speichern.
       </p>
-      <div class="kartenraster" id="karten"></div>
-      <p class="fuss" id="startfuss"></p>
+      <div id="karten"></div>
     </div>
   </section>
 </main>
@@ -169,28 +169,43 @@ const reiter = document.getElementById('reiter');
 const karten = document.getElementById('karten');
 const inhalt = document.getElementById('inhalt');
 
-/* ---------- Navigation und Startkarten aus der Registry bauen ---------- */
-function bauen(){
-  reiter.innerHTML = GENERATOREN.map(g =>
-    `<a href="#/${g.id}" data-id="${g.id}">${g.titel}</a>`
-  ).join('');
+/* ---------- Navigation und Startkarten aus der Registry bauen ----------
+   Fächer erscheinen in der Reihenfolge ihres ersten Auftretens in der
+   Registry, innerhalb eines Fachs bleibt die Registry-Reihenfolge.      */
+function nachFach(){
+  const gruppen = new Map();
+  GENERATOREN.forEach(g => {
+    if (!gruppen.has(g.fach)) gruppen.set(g.fach, []);
+    gruppen.get(g.fach).push(g);
+  });
+  return [...gruppen];
+}
 
-  karten.innerHTML = GENERATOREN.map(g =>
-    `<a class="karte" href="#/${g.id}">
+function karte(g){
+  return `<a class="karte" href="#/${g.id}">
       <span class="mini" aria-hidden="true">
         <i class="titelzeile"></i><i></i><i class="kurz"></i><i></i><i class="rot"></i><i class="kurz"></i>
       </span>
       <span class="text">
-        <span class="fach">${g.fach}</span>
-        <h2>${g.titel}</h2>
+        <h3>${g.titel}</h3>
         <p>${g.beschreibung}</p>
       </span>
-    </a>`
+    </a>`;
+}
+
+function bauen(){
+  const gruppen = nachFach();
+
+  reiter.innerHTML = gruppen.flatMap(([, liste]) => liste).map(g =>
+    `<a href="#/${g.id}" data-id="${g.id}">${g.titel}</a>`
   ).join('');
 
-  document.getElementById('startfuss').innerHTML =
-    `Neue Generatoren landen als HTML-Datei im Ordner <code>generatoren/</code> ` +
-    `und bekommen einen Eintrag in <code>generatoren.js</code>. Mehr dazu in der README.`;
+  karten.innerHTML = gruppen.map(([fach, liste], i) =>
+    `<section class="fachgruppe" aria-labelledby="fach-${i}">
+      <h2 class="fachtitel" id="fach-${i}">${fach} <span class="anzahl">${liste.length}</span></h2>
+      <div class="kartenraster">${liste.map(karte).join('')}</div>
+    </section>`
+  ).join('');
 }
 
 /* ---------- Ansichten: Startseite plus ein Iframe je Generator ----------

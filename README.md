@@ -12,9 +12,12 @@ uebungswerkstatt/
 │   ├── rechenblatt.html
 │   ├── einmaleins.html
 │   ├── uhrzeit.html
+│   ├── mathe-mix.html
 │   └── diktat.html
 └── README.md
 ```
+
+Der Mathe-Mix kombiniert Rechenblatt, Einmaleins und Uhrzeit auf einem Blatt. Er enthält eine Kopie der Aufgabenlogik dieser drei Generatoren; wer dort etwas ändert, sollte es im Mix nachziehen.
 
 Die Shell lädt jeden Generator in einem eigenen Iframe. Einmal geöffnete Generatoren bleiben im Hintergrund erhalten, Einstellungen gehen beim Wechseln also nicht verloren. Jede Ansicht hat eine eigene URL (`#/rechenblatt`, `#/diktat`) und lässt sich als Lesezeichen speichern.
 

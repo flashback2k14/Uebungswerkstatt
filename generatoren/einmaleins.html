@@ -240,105 +240,8 @@
   <div class="blattstapel" id="stapel"></div>
 </div>
 
+<script src="mathe-logic.js"></script>
 <script>
-/* ---------- Zufall mit Startwert, damit Blätter reproduzierbar sind ---------- */
-function mulberry32(a){
-  return function(){
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-const ganz = (rng, min, max) => min + Math.floor(rng() * (max - min + 1));
-const wahl = (rng, liste) => liste[Math.floor(rng() * liste.length)];
-
-/* ---------- Aufgaben bauen ---------- */
-function baueMultiplikation(rng, reihen){
-  const b = wahl(rng, reihen);        /* geübte Reihe */
-  const a = ganz(rng, 1, 10);
-  return { op:'·', a, b, r:a * b };
-}
-
-/* Division als Umkehraufgabe: r : b = a, der Teiler kommt aus der Reihe */
-function baueDivision(rng, reihen){
-  const b = wahl(rng, reihen);
-  const a = ganz(rng, 1, 10);
-  return { op:':', a:a * b, b, r:a };
-}
-
-function serie(rng, bauer, anzahl, reihen, luecken){
-  const raus = [], gesehen = new Set();
-  const maxVerschieden = reihen.length * 10;
-  let fehlversuche = 0;
-  while (raus.length < Math.min(anzahl, maxVerschieden) && fehlversuche < 1200){
-    const auf = bauer(rng, reihen);
-    const key = auf.a + auf.op + auf.b;
-    if (gesehen.has(key)){ fehlversuche++; continue; }
-    gesehen.add(key);
-    auf.form = 'ergebnis';
-    raus.push(auf);
-  }
-  if (luecken) verteilePlatzhalter(rng, raus);
-  return raus;
-}
-
-/* Genau die Hälfte der Aufgaben bekommt einen Platzhalter, zufällig verteilt. */
-function verteilePlatzhalter(rng, liste){
-  const plaetze = liste.map((_, i) => i);
-  for (let i = plaetze.length - 1; i > 0; i--){
-    const j = Math.floor(rng() * (i + 1));
-    [plaetze[i], plaetze[j]] = [plaetze[j], plaetze[i]];
-  }
-  const anzahl = Math.round(liste.length / 2);
-  for (let i = 0; i < anzahl; i++){
-    liste[plaetze[i]].form = rng() < 0.5 ? 'mitte' : 'links';
-  }
-}
-
-/* ---------- Darstellung ---------- */
-function termHtml(auf, karo){
-  const feld = karo ? '<span class="kasten"></span>' : '<span class="luecke"></span>';
-  const lue  = '<span class="luecke"></span>';
-  if (auf.form === 'mitte') return `${auf.a} ${auf.op} ${lue} = ${auf.r}`;
-  if (auf.form === 'links') return `${lue} ${auf.op} ${auf.b} = ${auf.r}`;
-  return `${auf.a} ${auf.op} ${auf.b} = ${feld}`;
-}
-
-function loesungHtml(auf){
-  return `${auf.a} ${auf.op} ${auf.b} = <span class="erg">${auf.r}</span>`;
-}
-
-function blockHtml(titel, liste, opt, startNr){
-  if (!liste.length) return '';
-  const zeilen = liste.map((auf, i) =>
-    `<div class="aufgabe">
-      <span class="nr">${startNr + i}.</span>
-      <span class="term">${termHtml(auf, opt.karo)}</span>
-    </div>`
-  ).join('');
-  return `<section class="block">
-    <h3 class="block-titel">${titel}</h3>
-    <div class="gitter" style="grid-template-columns:repeat(${opt.spalten},minmax(0,1fr))">${zeilen}</div>
-  </section>`;
-}
-
-function loesungsBlockHtml(titel, liste, startNr){
-  if (!liste.length) return '';
-  const zeilen = liste.map((auf, i) =>
-    `<div class="aufgabe"><span class="nr">${startNr + i}.</span><span class="term">${loesungHtml(auf)}</span></div>`
-  ).join('');
-  return `<section class="block">
-    <h3 class="block-titel">${titel}</h3>
-    <div class="gitter" style="grid-template-columns:repeat(3,minmax(0,1fr))">${zeilen}</div>
-  </section>`;
-}
-
-function untertitel(opt){
-  const reihen = opt.reihen.join('er-, ') + 'er-Reihe';
-  return `${opt.reihen.length === 10 ? 'alle Reihen' : reihen}`;
-}
-
 /* ---------- Zusammenbauen ---------- */
 const $ = id => document.getElementById(id);
 
@@ -378,8 +281,8 @@ function zeichne(){
   const reihenHash = opt.reihen.reduce((s, r) => s * 31 + r, 7);
   const rng = mulberry32(opt.seed * 2654435761 + opt.anzahl * 97 + reihenHash * 13);
 
-  const mult = opt.arten === 'div'  ? [] : serie(rng, baueMultiplikation, opt.anzahl, opt.reihen, opt.luecken);
-  const div  = opt.arten === 'mult' ? [] : serie(rng, baueDivision, opt.anzahl, opt.reihen, opt.luecken);
+  const mult = opt.arten === 'div'  ? [] : serieEinmaleins(rng, baueMultiplikation, opt.anzahl, opt.reihen, opt.luecken);
+  const div  = opt.arten === 'mult' ? [] : serieEinmaleins(rng, baueDivision, opt.anzahl, opt.reihen, opt.luecken);
 
   const fehlend = (opt.arten !== 'div' && mult.length < opt.anzahl) || (opt.arten !== 'mult' && div.length < opt.anzahl);
   hinweis.classList.toggle('an', fehlend);
@@ -390,7 +293,7 @@ function zeichne(){
   const kopf = `<header class="kopf">
       <div>
         <h2>${opt.titel}</h2>
-        <div class="meta">${untertitel(opt)} · Blatt ${opt.seed}</div>
+        <div class="meta">${reihenText(opt.reihen)} · Blatt ${opt.seed}</div>
       </div>
       <div class="felder">
         <span>Name<span class="feldlinie"></span></span>
@@ -400,8 +303,8 @@ function zeichne(){
 
   let html = `<article class="sheet">
       ${kopf}
-      ${blockHtml('Multiplikation', mult, opt, 1)}
-      ${blockHtml('Division', div, opt, 1)}
+      ${blockHtml('Multiplikation', mult, opt.spalten, opt.karo, 1, false)}
+      ${blockHtml('Division', div, opt.spalten, opt.karo, 1, false)}
     </article>`;
 
   if (opt.loesung && (mult.length || div.length)){

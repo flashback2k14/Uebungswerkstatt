@@ -13,11 +13,12 @@ uebungswerkstatt/
 │   ├── einmaleins.html
 │   ├── uhrzeit.html
 │   ├── mathe-mix.html
+│   ├── mathe-logic.js  gemeinsame Aufgabenlogik der Mathe-Generatoren
 │   └── diktat.html
 └── README.md
 ```
 
-Der Mathe-Mix kombiniert Plus Minus, Einmaleins und Uhrzeit auf einem Blatt. Er enthält eine Kopie der Aufgabenlogik dieser drei Generatoren; wer dort etwas ändert, sollte es im Mix nachziehen.
+Der Mathe-Mix kombiniert Plus Minus, Einmaleins und Uhrzeit auf einem Blatt. Die Aufgabenlogik aller Mathe-Generatoren (Zufall mit Startwert, Aufgaben bauen, Platzhalter, Rechenweg, Uhr-SVG, Darstellung der Aufgabenblöcke) steht zentral in `generatoren/mathe-logic.js`. Die Generatoren binden sie per `<script src="mathe-logic.js">` ein und enthalten selbst nur noch Einstellungen und Seitenaufbau. Eine Änderung dort gilt also sofort für den Einzel-Generator und den Mix.
 
 Die Shell lädt jeden Generator in einem eigenen Iframe. Einmal geöffnete Generatoren bleiben im Hintergrund erhalten, Einstellungen gehen beim Wechseln also nicht verloren. Jede Ansicht hat eine eigene URL (`#/plus-minus`, `#/diktat`) und lässt sich als Lesezeichen speichern.
 
@@ -63,6 +64,6 @@ Navigation, Startkarte und Route entstehen daraus automatisch. Die Shell muss ni
 
 ## Konventionen für Generatoren
 
-* Reproduzierbarkeit über eine Blattnummer (Seed), damit dasselbe Blatt erneut gedruckt werden kann. Die vorhandenen Generatoren nutzen dafür `mulberry32`.
+* Reproduzierbarkeit über eine Blattnummer (Seed), damit dasselbe Blatt erneut gedruckt werden kann. Die vorhandenen Generatoren nutzen dafür `mulberry32` (bei den Mathe-Generatoren aus `mathe-logic.js`).
 * Lösungsblatt als eigene Seite anhängen, wo es Sinn ergibt.
 * Farb- und Schriftvariablen aus den vorhandenen Dateien übernehmen (`--ink`, `--paper`, `--rot` usw.), damit alle Blätter zusammenpassen.

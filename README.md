@@ -8,6 +8,7 @@ Sammlung von Arbeitsblatt-Generatoren für das Üben zuhause. Reine statische Se
 uebungswerkstatt/
 ├── index.html          Shell: Startseite, Navigation, Routing
 ├── generatoren.js      Registry, ein Eintrag pro Generator
+├── favicon.svg         Favicon (dazu favicon-32.png, apple-touch-icon.png)
 ├── generatoren/
 │   ├── plus-minus.html
 │   ├── einmaleins.html

@@ -16,11 +16,11 @@
 
 const GENERATOREN = [
   {
-    id: 'rechenblatt',
-    titel: 'Rechenblatt',
+    id: 'plus-minus',
+    titel: 'Plus Minus',
     fach: 'Mathe',
     beschreibung: 'Plus- und Minusaufgaben im Zahlenraum bis 20, 100 oder 1000. Mit Zehnerübergang, Platzhaltern und Lösungsblatt.',
-    datei: 'generatoren/rechenblatt.html'
+    datei: 'generatoren/plus-minus.html'
   },
   {
     id: 'einmaleins',

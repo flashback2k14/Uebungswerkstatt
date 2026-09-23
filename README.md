@@ -9,7 +9,7 @@ uebungswerkstatt/
 ├── index.html          Shell: Startseite, Navigation, Routing
 ├── generatoren.js      Registry, ein Eintrag pro Generator
 ├── generatoren/
-│   ├── rechenblatt.html
+│   ├── plus-minus.html
 │   ├── einmaleins.html
 │   ├── uhrzeit.html
 │   ├── mathe-mix.html
@@ -17,9 +17,9 @@ uebungswerkstatt/
 └── README.md
 ```
 
-Der Mathe-Mix kombiniert Rechenblatt, Einmaleins und Uhrzeit auf einem Blatt. Er enthält eine Kopie der Aufgabenlogik dieser drei Generatoren; wer dort etwas ändert, sollte es im Mix nachziehen.
+Der Mathe-Mix kombiniert Plus Minus, Einmaleins und Uhrzeit auf einem Blatt. Er enthält eine Kopie der Aufgabenlogik dieser drei Generatoren; wer dort etwas ändert, sollte es im Mix nachziehen.
 
-Die Shell lädt jeden Generator in einem eigenen Iframe. Einmal geöffnete Generatoren bleiben im Hintergrund erhalten, Einstellungen gehen beim Wechseln also nicht verloren. Jede Ansicht hat eine eigene URL (`#/rechenblatt`, `#/diktat`) und lässt sich als Lesezeichen speichern.
+Die Shell lädt jeden Generator in einem eigenen Iframe. Einmal geöffnete Generatoren bleiben im Hintergrund erhalten, Einstellungen gehen beim Wechseln also nicht verloren. Jede Ansicht hat eine eigene URL (`#/plus-minus`, `#/diktat`) und lässt sich als Lesezeichen speichern.
 
 ## Hosten
 
